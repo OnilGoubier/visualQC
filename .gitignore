@@ -1,7 +1,11 @@
 # Byte-compiled 
-__pycache__/
+visualQC/__pycache__/
 
 
 # Tests results
 
 images/
+
+# # Distribution / packaging
+
+visualQC.egg-info/
