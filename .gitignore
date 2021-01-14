@@ -6,6 +6,8 @@ visualQC/__pycache__/
 
 images/
 
-# # Distribution / packaging
+# Distribution / packaging
 
 visualQC.egg-info/
+build/
+dist/
