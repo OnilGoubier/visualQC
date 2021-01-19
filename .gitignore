@@ -11,3 +11,5 @@ images/
 visualQC.egg-info/
 build/
 dist/
+.eggs/
+

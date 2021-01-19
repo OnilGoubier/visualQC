@@ -2,7 +2,7 @@
 
 from obspy import read_inventory
 import os, argparse
-from graphicGenerator import L1_nsplot_DataAvailability
+from graphicGenerator import plotDataAvailability
 import configparser
 
 """
@@ -15,19 +15,29 @@ onil@laut: ./plotDataAvailability.py /media/onil/NodeA/FileStore-in/2007-.MOMARO
 
 onil@laut: ./plotDataAvailability.py /media/onil/NodeA/FileStore-in/2007-.MOMAROBS/2007-2008.MOMAR_A --format mseed
 
+Install with pip:
+onil@dKelana: plotDataAvailability ~/IPGP2020/DocumentsTravail/DATA/NodeA/FileStore-in/2007-MOMAROBS/2007-2008.MOMAR_A/LSV5A
+
 """
 
 def main():
+
+    #default
+    outDir='.'
+    outSuffix = '.StaMap.jpeg'
+    mseedDirBaseName = '/*/miniseed_basic/*.mseed'
+    sdsDirBaseName = '/SDS_corrected/'
 
     #imagesDir='../Images/'
     config_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 
                                'config', 'config.ini')
     config = configparser.ConfigParser()                                     
-    config.read(config_filename)
+    confExists = config.read(config_filename)
 
     startTime=None
     endTime=None
     eventTime=None
+
     parser = argparse.ArgumentParser(description='Provide data availability of all stations of the network, fournir la disponibilité de données des stations du réseau)')
     parser.add_argument('iPath', metavar='INPUTDIR', help='<INPUTDIR> input file path / directory')
     parser.add_argument("--format", required=False, help='<FORMAT> Optional if using format MSEED')
@@ -45,22 +55,24 @@ def main():
         outFile=args.output
         #outFile=imagesDir+args.output
     else:
-        imagesDir = config.get('DTAVAILABILITY', 'RELIMAGEDIR')
-        if not os.path.isdir(imagesDir):
-            os.makedirs(imagesDir)
-        #outFile=imagesDir+'L1_nsplot_StationMaps.jpeg'
-        outSuffix = config.get('DTAVAILABILITY', 'OUTSUFFIX')
-        outDir=imagesDir
-        print(imagesDir)
+        if confExists:
+            outDir = config.get('DTAVAILABILITY', 'RELIMAGEDIR')
+            outSuffix = config.get('DTAVAILABILITY', 'OUTSUFFIX')
+        if not os.path.isdir(outDir):
+            os.makedirs(outDir)
         outFile = None
-        #outFile=imagesDir+'L1_nsplot_DataAvailability_withMseed.jpeg'
    
     if args.iPath:
         iDir = args.iPath
+
     if args.format:
-        iDir=iDir+'/*/miniseed_basic/*.mseed'
+        if confExists:
+            mseedDirBaseName = config.get('DTAVAILABILITY', 'MSEEDIFILES')
+        iDir=iDir+'/'+mseedDirBaseName
     else:
-        iDir=iDir+'/SDS_corrected/'
+        if confExists:
+            sdsDirBaseName = config.get('DTAVAILABILITY', 'SDSIDIRBASENAME')
+        iDir=iDir+'/'+sdsDirBaseName
     if args.startTime:
         startTime=args.startTime
     if args.endTime:
@@ -68,7 +80,7 @@ def main():
     if args.eventTime:
         eventTime=args.eventTime
   
-    grGenerator=L1_nsplot_DataAvailability(iDir, outFile, startTime, endTime, eventTime)
+    grGenerator=plotDataAvailability(iDir, outDir, outSuffix, outFile, startTime, endTime, eventTime)
     grGenerator.generate()
     
     

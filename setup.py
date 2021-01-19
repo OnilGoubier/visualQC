@@ -5,10 +5,10 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="visualQC", 
-    version="0.0.1",
+    version="0.0.1.3",
     #scripts=[ 
     #    'visualQC/graphicGenerator.py', 
-    #    'visualQC/dirAndFiles.py',
+    #    'visualQC/dirAndFiles.py'],
     #    'visualQC/plotStationsMap.py',
     #    'visualQC/plotDataAvailability.py'],
     author="IPGP",   
@@ -19,7 +19,9 @@ setuptools.setup(
     url="https://github.com/OnilGoubier/visualQC",
     packages=setuptools.find_packages(),
     package_dir={"visualQC": 'visualQC'},
+    # package_data and include_package_data = True are necessary to include config in .whl
     package_data={"visualQC": ['visualQC/config/config.ini']},
+    include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3.7",
         "Operating System :: OS Independent",

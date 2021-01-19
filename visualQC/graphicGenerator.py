@@ -12,12 +12,12 @@ import re
 
 class GraphicGenerator(ABC):
 
-    def __init__(self,inputDir,outputFile=None, outputDir=None, outSuffix=None, outputFormat=None):
+    def __init__(self,inputDir, outputDir=None, outSuffix=None, outputFile=None, outputFormat=None):
         self.inputDir=inputDir
-        self.outputFile=outputFile
-        self.outputFormat=outputFormat
         self.outputDir = outputDir
         self.outSuffix = outSuffix
+        self.outputFile=outputFile
+        self.outputFormat=outputFormat
 
     @abstractmethod
     def generate(self):
@@ -29,8 +29,8 @@ class MetadataGraphicGenerator(GraphicGenerator):
     extension='.xml'
     iXMLFiles=[]
 
-    def __init__(self, inputDir,outputFile, outputDir=None, outSuffix=None, outputFormat=None):
-        super().__init__(inputDir,outputFile, outputDir, outSuffix,  outputFormat)
+    def __init__(self, inputDir, outputDir=None, outSuffix=None, outputFile=None, outputFormat=None):
+        super().__init__(inputDir, outputDir, outSuffix, outputFile, outputFormat)
         self.iMetaDataDir=inputDir
 
     def getInputFile(self, station=None):
@@ -63,8 +63,8 @@ class MetadataGraphicGenerator(GraphicGenerator):
 
 class TimeBasedGraphicGenerator(GraphicGenerator):
 
-    def __init__(self, inputDir,outputFile, outputDir=None, outSuffix=None, outputFormat=None, startTime=None, endTime=None):
-        super().__init__(inputDir,outputFile, outputDir, outSuffix,  outputFormat)
+    def __init__(self, inputDir, outputDir=None, outSuffix=None, outputFile=None, outputFormat=None, startTime=None, endTime=None):
+        super().__init__(inputDir, outputDir, outSuffix,  outputFile, outputFormat)
         self.startTime=startTime
         self.endTime=endTime
 
@@ -74,8 +74,8 @@ class TimeBasedGraphicGenerator(GraphicGenerator):
 
 class EventBasedGraphicGenerator(TimeBasedGraphicGenerator):
 
-    def __init__(self, inputDir,outputFile, outSuffix=None, outputFormat=None, startTime=None, endTime=None, eventTime=None):
-        super().__init__(inputDir,outputFile, outSuffix,  outputFormat, startTime, endTime)
+    def __init__(self, inputDir, outputDir=None, outSuffix=None, outputFile=None, outputFormat=None, startTime=None, endTime=None, eventTime=None):
+        super().__init__(inputDir, outputDir, outSuffix, outputFile, outputFormat, startTime, endTime)
         self.eventTime=eventTime
 
     @abstractmethod
@@ -84,8 +84,8 @@ class EventBasedGraphicGenerator(TimeBasedGraphicGenerator):
 
 class DurationBasedGraphicGenerator(TimeBasedGraphicGenerator):
 
-    def __init__(self, inputDir,outputFile, outSuffix=None, outputFormat=None, startTime=None, endTime=None, duration=None):
-        super().__init__(inputDir,outputFile, outSuffix,  outputFormat, startTime, endTime)
+    def __init__(self, inputDir, outputDir=None, outSuffix=None, outputFile=None, outputFormat=None, startTime=None, endTime=None, duration=None):
+        super().__init__(inputDir, outputDir, outSuffix,  outputFile, outputFormat, startTime, endTime)
         self.duration=duration
 
     @abstractmethod
@@ -99,8 +99,8 @@ class MeasuredDataGraphicGenerator(DurationBasedGraphicGenerator):
     loc="*"
     chan="*"
 
-    def __init__(self, inputDir,outputFile, outSuffix=None, outputFormat=None, station="*", channel="*", startTime=None, endTime=None, duration=None):
-        super().__init__(inputDir,outputFile, outSuffix,  outputFormat, startTime, endTime, duration)
+    def __init__(self, inputDir, outputDir=None, outSuffix=None, outputFile=None, outputFormat=None, station="*", channel="*", startTime=None, endTime=None, duration=None):
+        super().__init__(inputDir, outputDir, outSuffix,  outputFile, outputFormat, startTime, endTime, duration)
         self.iDataDir=inputDir
         self.sta=station
         self.chan=channel
@@ -139,7 +139,7 @@ class GraphicMetaData:
             mywriter.writerow(self.csvFieldNames)
             mywriter.writerow(data)        
 
-class L1_nsplot_StationMaps(MetadataGraphicGenerator):
+class plotStationsMap(MetadataGraphicGenerator):
 
     def generate(self):
         """
@@ -150,15 +150,16 @@ class L1_nsplot_StationMaps(MetadataGraphicGenerator):
         inFile =self.iMetaDataDir
         inv= read_inventory(inFile,'STATIONXML')
         outFile = self.outputFile
-        print(inv[0].code)
-        print(self.outSuffix)
+        #print(inv[0].code)
+        #print(self.outSuffix)
         if  outFile == None:
             outFile = inv[0].code+self.outSuffix
             if self.outputDir != None:
                 outFile = self.outputDir+'/'+outFile
+        print('Generate image: '+outFile)
         inv.plot(projection="local", resolution="i", outfile=outFile)
 
-class L1_nsplot_DataAvailability(EventBasedGraphicGenerator):
+class plotDataAvailability(EventBasedGraphicGenerator):
 
     command='obspy-scan'
 
