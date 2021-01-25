@@ -5,10 +5,12 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="visualQC", 
-    version="0.0.1.3",
-    #scripts=[ 
-    #    'visualQC/graphicGenerator.py', 
-    #    'visualQC/dirAndFiles.py'],
+    version="0.0.1.4.2",
+    # should add graphicGenerator.py and dirAndFiles.py here, other solution ?
+    scripts=[ 
+        'visualQC/graphicGenerator.py', 
+        'visualQC/dirAndFiles.py' ],
+
     #    'visualQC/plotStationsMap.py',
     #    'visualQC/plotDataAvailability.py'],
     author="IPGP",   
@@ -17,8 +19,11 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/OnilGoubier/visualQC",
-    packages=setuptools.find_packages(),
-    package_dir={"visualQC": 'visualQC'},
+    packages = ['visualQC'],
+    #package_dir={"visualQC": 'visualQC'},
+    #package_dir={'': 'visualQC'},
+    #packages=setuptools.find_packages(where='visualQC'),
+    #packages=setuptools.find_packages(),
     # package_data and include_package_data = True are necessary to include config in .whl
     package_data={"visualQC": ['visualQC/config/config.ini']},
     include_package_data=True,
@@ -31,7 +36,11 @@ setuptools.setup(
         'console_scripts': [
             'plotStationsMap = visualQC.plotStationsMap:main',
             'plotDataAvailability = visualQC.plotDataAvailability:main',
+            'plotTimeWaveformsS = visualQC.plotTimeWaveformsS:main',
+            'plotInstrumentResponseS = visualQC.plotInstrumentResponseS:main'
     ],
+    #dependencies, package on pypi
+    #install_requires=['obspy',],
 },
 
 )

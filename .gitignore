@@ -12,4 +12,4 @@ visualQC.egg-info/
 build/
 dist/
 .eggs/
-
+clean.sh
