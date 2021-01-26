@@ -2,7 +2,7 @@
 
 from obspy import read_inventory
 import os, argparse, sys
-from graphicGenerator import plotInstrumentResponseS, NameModel
+from visualQC.graphicGenerator import PlotInstrumentResponseS, NameModel
 import configparser
 
 
@@ -31,7 +31,6 @@ def main():
     config = configparser.ConfigParser()                                     
     confExists = config.read(config_filename)
 
-    imagesDir='../Images/L2_nsplot-sInstrumentResponse/'
     parser = argparse.ArgumentParser(description='Provide plots of instrument response with all channels for one station (fournit graphe/courbe de réponse instrumentale, avec tous les canaux, pour une station)')
     parser.add_argument('iFile', metavar='INPUTMETAFILE', help='<INPUTMETAFILE> input file, wildcards accepted (please write the name with wildcards * between quotes, ex. "*.xml")')
     parser.add_argument("--output", metavar='OUTPUTFILE', required=False, help='<OUTPUTFILE> Optional output file name')
@@ -65,7 +64,7 @@ def main():
   
     if args.iFile:
         outNameModel = NameModel(outPrefix, outInfix, outSuffix)   
-        grGenerator=plotInstrumentResponseS(args.iFile, outDir, outNameModel, outFile, outFmt, station=station)
+        grGenerator=PlotInstrumentResponseS(args.iFile, outDir, outNameModel, outFile, outFmt, station=station)
         grGenerator.generate()
     
     

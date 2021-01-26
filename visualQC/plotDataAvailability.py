@@ -2,7 +2,7 @@
 
 from obspy import read_inventory
 import os, argparse
-from graphicGenerator import PlotDataAvailability, NameModel
+from visualQC.graphicGenerator import PlotDataAvailability, NameModel
 import configparser
 
 """

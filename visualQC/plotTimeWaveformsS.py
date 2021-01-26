@@ -2,7 +2,7 @@
 
 from obspy import read_inventory
 import os, argparse, sys
-from graphicGenerator import PlotTimeWaveformsS, NameModel
+from visualQC.graphicGenerator import PlotTimeWaveformsS, NameModel
 from obspy import UTCDateTime
 import configparser
 
@@ -32,6 +32,7 @@ def main():
     csvDir='.'
     csvFileName = 'timeWaveformsS.csv'
 
+    # config
     config_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 
                                'config', 'config.ini')
     config = configparser.ConfigParser()                                     
@@ -42,15 +43,6 @@ def main():
     eventTime=None
     duration=60
     sta="*"
-
-    #outFile=imagesDir+'L2B_nsplot_sTimeWaveforms_e2' #Images directory should have been created
-    #outFile=imagesDir+'L2B_nsplot_sTimeWaveforms_testMult'
-    #outFile=imagesDir+'L2B_nsplot_sTimeWaveforms_testMult'
-    #startTime = UTCDateTime("2007-07-20T21")
-    #duration=86400
-    #startTime = UTCDateTime("2008-03-01T13") #event 2 at "2008-03-02T00:19:59Z"
-    #startTime = UTCDateTime("2007-11-27T15") #event 1  at "2007-11-28T03:43:37.1"
-    #duration=86400
     
     parser = argparse.ArgumentParser(description='Provide waveforms of all (or a subset of) channels of a station (fournit graphe/courbe de réponse instrumentale, avec tous les canaux, pour une station). Fournit diagramme de séries temporelles pour chaque station, relativement à un événement sismique particulier (Doc Olivier)')
     parser.add_argument('iPath', metavar='INPUTDIR', help='<INPUTDIR> input file path / directory')
@@ -67,9 +59,6 @@ def main():
 
     if args.station:
         sta=args.station
-        print(sta)
-        #if not args.output:
-        #    outFile=outFile+'_'+sta #Images directory should have been created
 
     if args.output:
         outDir = os.path.dirname(args.output)
@@ -97,7 +86,7 @@ def main():
         #print(args.model)
 
     if args.result:
-        print(args.result)
+        #print(args.result)
         csvFileName=args.result
     else:
         if confExists:
@@ -109,20 +98,14 @@ def main():
 
     if args.startTime:
         startTime=UTCDateTime(args.startTime)
-        print(startTime)
+        #print(startTime)
     if args.endTime:
         endTime=UTCDateTime(args.endTime)
-        print(endTime)
+        #print(endTime)
     if args.duration:
         duration=args.duration
-        print(duration)
-        #duration=duration*86400
+        #print(duration)
         endTime=startTime+duration
-
-    #if args.output:
-    #    outFile=imagesDir+args.output
-    #else:
-    #    outFile=outFile+fmt
 
     if args.iPath:
         outNameModel = NameModel(outPrefix, outInfix, outSuffix)

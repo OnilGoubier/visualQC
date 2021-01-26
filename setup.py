@@ -5,11 +5,11 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="visualQC", 
-    version="0.0.1.4.2",
+    version="0.0.1.4.5",
     # should add graphicGenerator.py and dirAndFiles.py here, other solution ?
-    scripts=[ 
-        'visualQC/graphicGenerator.py', 
-        'visualQC/dirAndFiles.py' ],
+    #scripts=[ 
+    #    'visualQC/graphicGenerator.py', 
+    #    'visualQC/dirAndFiles.py' ],
 
     #    'visualQC/plotStationsMap.py',
     #    'visualQC/plotDataAvailability.py'],
@@ -37,7 +37,16 @@ setuptools.setup(
             'plotStationsMap = visualQC.plotStationsMap:main',
             'plotDataAvailability = visualQC.plotDataAvailability:main',
             'plotTimeWaveformsS = visualQC.plotTimeWaveformsS:main',
-            'plotInstrumentResponseS = visualQC.plotInstrumentResponseS:main'
+            'plotInstrumentResponseS = visualQC.plotInstrumentResponseS:main',
+            'plotInstrumentResponseC = visualQC.plotInstrumentResponseC:main',
+            'PlotStationsMap = visualQC.graphicGenerator:PlotStationsMap',
+            'ModuleName = visualQC.graphicGenerator:ModuleName',
+            'PlotDataAvailability = visualQC.graphicGenerator:PlotDataAvailability',
+            'PlotTimeWaveformsS = visualQC.graphicGenerator:PlotTimeWaveformsS',
+            'PlotInstrumentResponseS = visualQC.graphicGenerator:PlotInstrumentResponseS',
+            'PlotInstrumentResponseC = visualQC.graphicGenerator:PlotInstrumentResponseC',
+            'listOfFilesWithAbsName = visualQC.dirAndFiles:listOfFilesWithAbsName' 
+
     ],
     #dependencies, package on pypi
     #install_requires=['obspy',],

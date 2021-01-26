@@ -1,6 +1,6 @@
 
 from abc import ABC, abstractmethod
-from dirAndFiles import listOfFilesWithAbsName
+from visualQC.dirAndFiles import listOfFilesWithAbsName
 from obspy.clients.filesystem.sds import Client
 from obspy import read_inventory
 from obspy import read
@@ -60,6 +60,14 @@ class GraphicGenerator(ABC):
         self.outputModel = outModel
         self.outputFile=outputFile
         self.outputFormat=outputFormat
+
+    def generateName(self):
+
+        outModel = self.outputModel
+        outFile = outModel.generateName() + self.outputFormat
+        if self.outputDir != None:
+            outFile = self.outputDir+outFile
+        return outFile
 
     @abstractmethod
     def generate(self):
@@ -188,7 +196,7 @@ class GraphicMetaData:
 
 class PlotStationsMap(MetadataGraphicGenerator):
 
-    def generateName(self):
+    """def generateName(self):
 
         # Olivier comments : 
         #Le modèle de nom du fichier de sortie pourrait être, par défaut :
@@ -200,7 +208,7 @@ class PlotStationsMap(MetadataGraphicGenerator):
         outFile = outModel.generateName() + self.outputFormat
         if self.outputDir != None:
             outFile = self.outputDir+outFile
-        return outFile
+        return outFile"""
 
     def generate(self):
         """
@@ -223,7 +231,7 @@ class PlotDataAvailability(EventBasedGraphicGenerator):
 
     command='obspy-scan'
  
-    def generateName(self):
+    """def generateName(self):
 
         # Olivier comments : 
         #Le modèle de nom du fichier de sortie pourrait être, par défaut :
@@ -239,7 +247,7 @@ class PlotDataAvailability(EventBasedGraphicGenerator):
         outFile = outModel.generateName() + self.outputFormat
         if self.outputDir != None:
             outFile = self.outputDir+outFile
-        return outFile  
+        return outFile  """
 
     def generate(self):
         """
@@ -258,10 +266,11 @@ class PlotDataAvailability(EventBasedGraphicGenerator):
         if  outFile == None:
             outFile = self.generateName()
         self.command=self.command+' --output '+outFile
-        print(self.command)
+        #print(self.command)
+        print('Generate image: '+outFile)
         os.system(self.command)
 
-class plotInstrumentResponseS(MetadataGraphicGenerator):
+class PlotInstrumentResponseS(MetadataGraphicGenerator):
     
     station = ""
 
@@ -271,7 +280,7 @@ class plotInstrumentResponseS(MetadataGraphicGenerator):
 
 
 
-    def generateName(self):
+    """def generateName(self):
 
         #Le modèle de nom du fichier de sortie pourrait être, par défaut :
         #"<NETCODE>.<STACODE>.#L.#C.InstrumentResponseS.jpeg"
@@ -280,7 +289,7 @@ class plotInstrumentResponseS(MetadataGraphicGenerator):
         outFile = outModel.generateName() + self.outputFormat
         if self.outputDir != None:
             outFile = self.outputDir+outFile
-        return outFile
+        return outFile"""
 
     def generate(self):
         """
@@ -300,22 +309,41 @@ class plotInstrumentResponseS(MetadataGraphicGenerator):
         print('Generate image: '+outFile)
         sta.plot(0.001, output="VEL", outfile=outFile)
 
-class L3_nsplot_cInstrumentResponse(MetadataGraphicGenerator, GraphicMetaData):
+class PlotInstrumentResponseC(MetadataGraphicGenerator, GraphicMetaData):
 
-    def __init__(self, inputDir,outputFile, outputFormat=None, channel="", csvFileName="", csvFieldNames=[]):
-        MetadataGraphicGenerator.__init__(self,inputDir,outputFile, outputFormat)
+    def __init__(self, inputDir, outputDir=None, outputModel=None, outputFile=None, outputFormat=None, channel="", csvFileName="", csvFieldNames=[]):
+        MetadataGraphicGenerator.__init__(self,inputDir, outputDir, outputModel, outputFile, outputFormat)
         GraphicMetaData.__init__(self, csvFileName, csvFieldNames)
         self.channel=channel
 
+    """def generateName(self):
+
+        #Le modèle de nom du fichier de sortie pourrait être, par défaut :
+        #"<NETCODE>.#S.#L.<STACODE>.InstrumentResponseS.jpeg"
+
+        outModel = self.outputModel
+        outFile = outModel.generateName() + self.outputFormat
+        if self.outputDir != None:
+            outFile = self.outputDir+outFile
+        return outFile"""
+
     def generate(self):
 
-        print("InputDir:"+self.inputDir)
-        print(self.extension)
-        inFile = self.getInputFile()
+        #print("InputDir:"+self.inputDir)
+        #print(self.extension)
+        #inFile = self.getInputFile()
+        inFile =self.iMetaDataDir
         inv = read_inventory(inFile,'STATIONXML')
+        outFile = self.outputFile
+        if  outFile == None:
+            self.outputModel.setPrefix(inv[0].code+'.#S.#L.'+self.channel+'.')
+            outFile = self.generateName()
+
+
         inv = inv.select(station='*', channel=self.channel)	
         #inv.plot_response(0.001, outfile=self.outputFile, label_epoch_dates=True)
-        inv.plot_response(0.001, outfile=self.outputFile)
+        print('Generate image: '+outFile)
+        inv.plot_response(0.001, outfile=outFile)
         self.generateCSV([self.channel, self.outputFile])
 
 
@@ -327,7 +355,7 @@ class  PlotTimeWaveformsS(MeasuredDataGraphicGenerator, GraphicMetaData):
         GraphicMetaData.__init__(self, csvFileName, csvFieldNames)
         #self.outInfix = outInfix
 
-    def generateName(self):
+    """def generateName(self):
 
         # Olivier comments : Des informations temporelles pourraient être ajoutées :
         # "<NETCODE>.<#STACODE>.<LOCCODE>.#C.<TIMERANGE>.STimeWaveforms.jpeg"
@@ -340,7 +368,7 @@ class  PlotTimeWaveformsS(MeasuredDataGraphicGenerator, GraphicMetaData):
         #outFile = self.sta + self.outInfix + self.outFormat
         if self.outputDir != None:
             outFile = self.outputDir+outFile
-        return outFile
+        return outFile"""
 
     def generate(self):
         """
@@ -351,12 +379,14 @@ class  PlotTimeWaveformsS(MeasuredDataGraphicGenerator, GraphicMetaData):
         """
 
         st = self.getStream()
-        print(st)
+        #print(st)
 
         outFile = self.outputFile
         if  outFile == None:
+            self.outputModel.setPrefix(self.sta+'.')
             outFile = self.generateName()
 
+        print('Generate image: '+outFile)
         st.plot(outfile=outFile, equal_scale = False)
         #st.plot(outfile=self.outputFile)
         self.generateCSV([self.sta, self.startTime, self.endTime, outFile])

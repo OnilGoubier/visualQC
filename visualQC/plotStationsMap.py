@@ -7,7 +7,7 @@ Can use one xml file containing metadata of all stations
 
 from obspy import read_inventory
 import os, argparse
-from graphicGenerator import PlotStationsMap, NameModel
+from visualQC.graphicGenerator import PlotStationsMap, NameModel
 import configparser
 
 """
