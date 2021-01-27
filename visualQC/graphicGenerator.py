@@ -344,7 +344,7 @@ class PlotInstrumentResponseC(MetadataGraphicGenerator, GraphicMetaData):
         #inv.plot_response(0.001, outfile=self.outputFile, label_epoch_dates=True)
         print('Generate image: '+outFile)
         inv.plot_response(0.001, outfile=outFile)
-        self.generateCSV([self.channel, self.outputFile])
+        self.generateCSV([self.channel, os.path.abspath(outfile)])
 
 
 class  PlotTimeWaveformsS(MeasuredDataGraphicGenerator, GraphicMetaData):
@@ -444,13 +444,14 @@ class L3B_nsplot_cTimeWaveforms(MeasuredDataGraphicGenerator, GraphicMetaData):
         #st.plot(outfile=self.outputFile)
         self.generateCSV([self.chan, self.startTime, self.endTime, self.outputFile])
 
-class L3B_nsplot_cTimeWaveforms_RemResp(MeasuredDataGraphicGenerator, MetadataGraphicGenerator, GraphicMetaData):
+class PlotTimeWaveformsC(MeasuredDataGraphicGenerator, MetadataGraphicGenerator, GraphicMetaData):
 
-    def __init__(self, inputDir, iXMLDir, outputFile, outputFormat=None, station="*", channel="*", startTime=None, endTime=None, duration=None, csvFileName="", csvFieldNames=[], outUnit="VEL"):
-        MeasuredDataGraphicGenerator.__init__(self,inputDir,outputFile, outputFormat, station, channel, startTime, endTime, duration)
-        MetadataGraphicGenerator.__init__(self, iXMLDir, outputFile, outputFormat)
+    def __init__(self, inputDir, iMetaFile, outputDir=None, outputModel=None, outputFile=None, outputFormat=None, station="*", channel="*", startTime=None, endTime=None, duration=None, csvFileName="", csvFieldNames=[], outUnit="VEL", removeResponse=True):
+        MeasuredDataGraphicGenerator.__init__(self,inputDir, outputDir, outputModel, outputFile, outputFormat, station, channel, startTime, endTime, duration)
+        MetadataGraphicGenerator.__init__(self, iMetaFile, outputDir, outputModel, outputFile, outputFormat)
         GraphicMetaData.__init__(self, csvFileName, csvFieldNames)
         self.outUnit=outUnit
+        self.removeResponse=removeResponse
 
     def generate(self):
         """
@@ -458,27 +459,32 @@ class L3B_nsplot_cTimeWaveforms_RemResp(MeasuredDataGraphicGenerator, MetadataGr
         Fournir graphes/courbes de réponse instrumentale, avec tous les canaux, pour une station)
         """
 
-        if self.sta == "*":
-            station=None
-        else:
-            station=self.sta
-        print("station: ", station)
-        inFile = self.getInputFile(station)
-        print("inFile : ", inFile)
+        inFile =self.iMetaDataDir
+        print('channel: ' +self.chan)
         inv = read_inventory(inFile,'STATIONXML')
-
+        inv = inv.select(station='*', channel=self.chan)
+        outFile = self.outputFile
+        if  outFile == None:
+            self.outputModel.setPrefix(inv[0].code+'.#S.#L.'+self.chan+'.')
+            outFile = self.generateName()
 
         st = self.getStream()
         #print(st)csv/timeWaveformsS/
-        st2 = st.copy()
-        print("st2 : ", st2)
-        plotFile="../Images/TWfComp/L3B_nsplot_cTWaveforms_RemResp_"+self.outUnit+"_stepPlot_"+self.sta+"_"+self.chan+".jpeg"
-        #st2.remove_response(inventory=inv, output="VEL")
-        st2.remove_response(inventory=inv, output=self.outUnit, plot=plotFile)
-        st2.plot(outfile=self.outputFile)
-        #st.plot(outfile=self.outputFile, equal_scale = False)
-        #st.plot(outfile=self.outputFile)
-        self.generateCSV([self.chan, self.startTime, self.endTime, self.outputFile])
+        print(self.removeResponse)
+        if self.removeResponse:
+            print(self.removeResponse)
+            st2 = st.copy()
+            print("st2 : ", st2)
+            print(self.outUnit)
+            #plotFile="../Images/TWfComp/L3B_nsplot_cTWaveforms_RemResp_"+self.outUnit+"_stepPlot_"+self.sta+"_"+self.chan+".jpeg"
+            #st2.remove_response(inventory=inv, output="VEL")
+            #st2.remove_response(inventory=inv, output=self.outUnit, plot=plotFile)
+            st2.remove_response(inventory=inv, output=self.outUnit)
+            st2.plot(outfile=outFile)
+        else:
+            #st.plot(outfile=self.outputFile, equal_scale = False)
+            st.plot(outfile=outFile)
+        self.generateCSV([self.chan, self.startTime, self.endTime, os.path.abspath(outFile)])
 
 class L3_nsplot_cPPSD(MeasuredDataGraphicGenerator, MetadataGraphicGenerator, GraphicMetaData):
 

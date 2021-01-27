@@ -36,16 +36,18 @@ setuptools.setup(
         'console_scripts': [
             'plotStationsMap = visualQC.plotStationsMap:main',
             'plotDataAvailability = visualQC.plotDataAvailability:main',
-            'plotTimeWaveformsS = visualQC.plotTimeWaveformsS:main',
             'plotInstrumentResponseS = visualQC.plotInstrumentResponseS:main',
             'plotInstrumentResponseC = visualQC.plotInstrumentResponseC:main',
+            'plotTimeWaveformsS = visualQC.plotTimeWaveformsS:main',
+            'plotTimeWaveformsC = visualQC.plotTimeWaveformsC:main',
             'PlotStationsMap = visualQC.graphicGenerator:PlotStationsMap',
-            'ModuleName = visualQC.graphicGenerator:ModuleName',
             'PlotDataAvailability = visualQC.graphicGenerator:PlotDataAvailability',
             'PlotTimeWaveformsS = visualQC.graphicGenerator:PlotTimeWaveformsS',
+            'PlotTimeWaveformsC = visualQC.graphicGenerator:PlotTimeWaveformsC',
             'PlotInstrumentResponseS = visualQC.graphicGenerator:PlotInstrumentResponseS',
             'PlotInstrumentResponseC = visualQC.graphicGenerator:PlotInstrumentResponseC',
-            'listOfFilesWithAbsName = visualQC.dirAndFiles:listOfFilesWithAbsName' 
+            'listOfFilesWithAbsName = visualQC.dirAndFiles:listOfFilesWithAbsName'
+            'ModuleName = visualQC.graphicGenerator:ModuleName', 
 
     ],
     #dependencies, package on pypi
