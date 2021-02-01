@@ -36,6 +36,7 @@ def main():
     parser.add_argument("--output", metavar='OUTPUTFILE', required=False, help='<OUTPUTFILE> Optional output file name')
     parser.add_argument('--station', metavar='STACOD', help='<STACOD> Optional code stationn required when there are more than one stationXML file', required=True)
     parser.add_argument("--outFormat",  metavar='FMTID', required=False, help='<FMTID> Optional format of output file (JPEG ro PNG)')
+    parser.add_argument('--result', required=False,  help='<RESULT> Required path to a CSV output file ')
 
     args = parser.parse_args()
 
@@ -60,11 +61,23 @@ def main():
         outFmt=args.outFormat
     else:
         if confExists:
-            outFmt = config.get('ALLPLOTS', 'OUTFORMAT') 
+            outFmt = config.get('ALLPLOTS', 'OUTFORMAT')
+
+    if args.result:
+        print(args.result)
+        csvAbsFileName=args.result
+    else:
+        if confExists:
+            csvDir = config.get('INSTRESPONSES', 'CSVDIR')
+            csvFileName = config.get('INSTRESPONSES', 'CSVFILENAME')
+        if not os.path.isdir(csvDir):
+            os.makedirs(csvDir)
+        csvAbsFileName=csvDir+csvFileName 
   
     if args.iFile:
-        outNameModel = NameModel(outPrefix, outInfix, outSuffix)   
-        grGenerator=PlotInstrumentResponseS(args.iFile, outDir, outNameModel, outFile, outFmt, station=station)
+        outNameModel = NameModel(outPrefix, outInfix, outSuffix)
+        csvFieldNames=['station code', ' Absolute Path File']     
+        grGenerator=PlotInstrumentResponseS(args.iFile, outDir, outNameModel, outFile, outFmt, station=station, csvFileName=csvAbsFileName, csvFieldNames=csvFieldNames)
         grGenerator.generate()
     
     

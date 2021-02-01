@@ -26,7 +26,10 @@ setuptools.setup(
     #packages=setuptools.find_packages(),
     # package_data and include_package_data = True are necessary to include config in .whl
     package_data={"visualQC": ['visualQC/config/config.ini']},
+    #package_data={"": ['visualQC/config/config.ini', 'visualQC/data/noise_models.npz']},
     include_package_data=True,
+    data_files=[('data', ['visualQC/data/noise_models.npz'])],
+
     classifiers=[
         "Programming Language :: Python :: 3.7",
         "Operating System :: OS Independent",
@@ -40,12 +43,16 @@ setuptools.setup(
             'plotInstrumentResponseC = visualQC.plotInstrumentResponseC:main',
             'plotTimeWaveformsS = visualQC.plotTimeWaveformsS:main',
             'plotTimeWaveformsC = visualQC.plotTimeWaveformsC:main',
+            'plotPPSDSC = visualQC.plotPPSDSC:main',
+            'plotPPSDC = visualQC.plotPPSDC:main',
             'PlotStationsMap = visualQC.graphicGenerator:PlotStationsMap',
             'PlotDataAvailability = visualQC.graphicGenerator:PlotDataAvailability',
             'PlotTimeWaveformsS = visualQC.graphicGenerator:PlotTimeWaveformsS',
             'PlotTimeWaveformsC = visualQC.graphicGenerator:PlotTimeWaveformsC',
             'PlotInstrumentResponseS = visualQC.graphicGenerator:PlotInstrumentResponseS',
             'PlotInstrumentResponseC = visualQC.graphicGenerator:PlotInstrumentResponseC',
+            'PlotPPSDSC = visualQC.graphicGenerator:PlotPPSDSC',
+            'PlotPPSDC = visualQC.graphicGenerator:PlotPPSDC',
             'listOfFilesWithAbsName = visualQC.dirAndFiles:listOfFilesWithAbsName'
             'ModuleName = visualQC.graphicGenerator:ModuleName', 
 

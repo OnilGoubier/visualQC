@@ -51,7 +51,7 @@ def main():
     parser.add_argument("--outFormat",  metavar='FMTID', required=False, help='<FMTID> Optional format of output file (JPEG, PNG, SVG)')
     #parser.add_argument("--model",  required=False, help='<MODEL> Optional model output file')
     parser.add_argument('--result', required=False,  help='<RESULT> Optional path to a CSV output file ')
-    parser.add_argument("--startTime", metavar='START_TIME', required=False, help='<START_TIME> Optional starting time')
+    parser.add_argument("--startTime", metavar='START_TIME', required=True, help='<START_TIME> Optional starting time')
     parser.add_argument("--endTime",  metavar='END_TIME', required=False, help='<END_TIME> Optional end time')
     parser.add_argument("--duration",  metavar='SECONDCOUNT', required=False, type=int, help='<SECONDCOUNT> Optional number of second for each station waveform plot, this usually corresponds to the duration of a seismic event')
 
@@ -87,7 +87,7 @@ def main():
 
     if args.result:
         #print(args.result)
-        csvFileName=args.result
+        csvAbsFileName=args.result
     else:
         if confExists:
             csvDir = config.get('TIMEWAVEFORMSS', 'CSVDIR')

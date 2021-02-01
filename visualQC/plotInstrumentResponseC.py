@@ -69,7 +69,7 @@ def main():
 
     if args.result:
         print(args.result)
-        csvFileName=args.result
+        csvAbsFileName=args.result
     else:
         if confExists:
             csvDir = config.get('INSTRESPONSEC', 'CSVDIR')

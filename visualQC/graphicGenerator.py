@@ -9,6 +9,36 @@ from obspy.signal import PPSD
 import os
 import csv
 import re
+import matplotlib.pyplot as plt
+import numpy as np
+
+NOISE_MODEL_FILE = os.path.join(os.path.dirname(__file__),
+                                "data", "noise_models.npz")
+"""
+The following functions (get_nlnm() and get_nhnm()) are the copy of the functions of obspy
+in the spectral_estimation.py 
+"""
+
+def get_nlnm():
+    """
+    Returns periods and psd values for the New Low Noise Model.
+    For information on New High/Low Noise Model see [Peterson1993]_.
+    """
+    data = np.load(NOISE_MODEL_FILE)
+    periods = data['model_periods']
+    nlnm = data['low_noise']
+    return (periods, nlnm)
+
+
+def get_nhnm():
+    """
+    Returns periods and psd values for the New High Noise Model.
+    For information on New High/Low Noise Model see [Peterson1993]_.
+    """
+    data = np.load(NOISE_MODEL_FILE)
+    periods = data['model_periods']
+    nlnm = data['high_noise']
+    return (periods, nlnm)
 
 class NameModel():
 
@@ -54,8 +84,7 @@ class NameModel():
 
 class GraphicGenerator(ABC):
 
-    def __init__(self,inputDir, outputDir=None, outModel=None, outputFile=None, outputFormat=None):
-        self.inputDir=inputDir
+    def __init__(self, outputDir=None, outModel=None, outputFile=None, outputFormat=None):
         self.outputDir = outputDir
         self.outputModel = outModel
         self.outputFile=outputFile
@@ -79,12 +108,14 @@ class MetadataGraphicGenerator(GraphicGenerator):
     extension='.xml'
     iXMLFiles=[]
 
-    def __init__(self, inputDir, outputDir=None, outModel=None, outputFile=None, outputFormat=None):
-        super().__init__(inputDir, outputDir, outModel, outputFile, outputFormat)
-        self.iMetaDataDir=inputDir
+    def __init__(self, iMetaDataDir, outputDir=None, outModel=None, outputFile=None, outputFormat=None):
+        super().__init__(outputDir, outModel, outputFile, outputFormat)
+        self.iMetaDataDir=iMetaDataDir
+        #print("metadata dir: " + iMetaDataDir)
+        #self.inventory=read_inventory(self.iMetaDataDir,'STATIONXML')
 
     def getInputFile(self, station=None):
-        """ return an xml format input file with absolut path, or an absolute path name with *.xml, for a number of stations"""
+        """ return an xml format input file with absolut path, or an absolute path name with *.xml, for a number of stations. Deprecated !!!"""
 
         
         self.iXMLFiles=listOfFilesWithAbsName(self.iMetaDataDir, self.extension)
@@ -96,7 +127,7 @@ class MetadataGraphicGenerator(GraphicGenerator):
             if(len(self.iXMLFiles)>1):
                 if station:
                     for fn in self.iXMLFiles:
-                        if (os.path.basename(fn).rfind(station) >= 0):
+                        if (os.path.base(fn).rfind(station) >= 0):
                             inXMLFile=fn
                             #print("inXMLFile : ", inXMLFile)		
                 else:
@@ -114,7 +145,9 @@ class MetadataGraphicGenerator(GraphicGenerator):
 class TimeBasedGraphicGenerator(GraphicGenerator):
 
     def __init__(self, inputDir, outputDir=None, outModel=None, outputFile=None, outputFormat=None, startTime=None, endTime=None):
-        super().__init__(inputDir, outputDir, outModel,  outputFile, outputFormat)
+        super().__init__(outputDir, outModel,  outputFile, outputFormat)
+        #GraphicGenerator.__init__(outputDir, outModel,  outputFile, outputFormat)
+        self.inputDir=inputDir
         self.startTime=startTime
         self.endTime=endTime
 
@@ -154,6 +187,14 @@ class MeasuredDataGraphicGenerator(DurationBasedGraphicGenerator):
         self.iDataDir=inputDir
         self.sta=station
         self.chan=channel
+
+    def isHydrophone(self):
+        if re.match('..H', self.chan) != None:
+            #self.isHydrophone = True
+            return True
+        else:
+            #self.isHydrophone = False
+            return False            
 
     #input from SDS file
     def getStream(self):
@@ -196,19 +237,6 @@ class GraphicMetaData:
 
 class PlotStationsMap(MetadataGraphicGenerator):
 
-    """def generateName(self):
-
-        # Olivier comments : 
-        #Le modèle de nom du fichier de sortie pourrait être, par défaut :
-        #"<NETCODE>.#S.StationsMap.jpeg"
-        # ou :
-        #"<NETCODE>.#S.stamap.jpeg"
-
-        outModel = self.outputModel
-        outFile = outModel.generateName() + self.outputFormat
-        if self.outputDir != None:
-            outFile = self.outputDir+outFile
-        return outFile"""
 
     def generate(self):
         """
@@ -230,24 +258,6 @@ class PlotStationsMap(MetadataGraphicGenerator):
 class PlotDataAvailability(EventBasedGraphicGenerator):
 
     command='obspy-scan'
- 
-    """def generateName(self):
-
-        # Olivier comments : 
-        #Le modèle de nom du fichier de sortie pourrait être, par défaut :
-        #"<NETCODE>.#S.#L.#C.DataAvailability.jpeg"
-        #ou :
-        #"<NETCODE>.#S.#L.#C.davail.jpeg"
-
-        #La présence de symboles "#S", "#L" et "#C" indique que station,
-        #location et channel codes sont présents, en tant qu'informations,
-        #dans le graphique.
-
-        outModel = self.outputModel
-        outFile = outModel.generateName() + self.outputFormat
-        if self.outputDir != None:
-            outFile = self.outputDir+outFile
-        return outFile  """
 
     def generate(self):
         """
@@ -270,26 +280,14 @@ class PlotDataAvailability(EventBasedGraphicGenerator):
         print('Generate image: '+outFile)
         os.system(self.command)
 
-class PlotInstrumentResponseS(MetadataGraphicGenerator):
+class PlotInstrumentResponseS(MetadataGraphicGenerator, GraphicMetaData):
     
     station = ""
 
-    def __init__(self, inputDir, outputDir=None, outputModel=None, outputFile=None, outputFormat=None, station=""):
+    def __init__(self, inputDir, outputDir=None, outputModel=None, outputFile=None, outputFormat=None, station="", csvFileName="", csvFieldNames=[]):
         super().__init__(inputDir, outputDir, outputModel, outputFile, outputFormat)
+        GraphicMetaData.__init__(self, csvFileName, csvFieldNames)
         self.station=station
-
-
-
-    """def generateName(self):
-
-        #Le modèle de nom du fichier de sortie pourrait être, par défaut :
-        #"<NETCODE>.<STACODE>.#L.#C.InstrumentResponseS.jpeg"
-
-        outModel = self.outputModel
-        outFile = outModel.generateName() + self.outputFormat
-        if self.outputDir != None:
-            outFile = self.outputDir+outFile
-        return outFile"""
 
     def generate(self):
         """
@@ -308,6 +306,7 @@ class PlotInstrumentResponseS(MetadataGraphicGenerator):
         sta = inv[0].select(station=self.station)[0]
         print('Generate image: '+outFile)
         sta.plot(0.001, output="VEL", outfile=outFile)
+        self.generateCSV([self.station, os.path.abspath(outFile)])
 
 class PlotInstrumentResponseC(MetadataGraphicGenerator, GraphicMetaData):
 
@@ -315,17 +314,6 @@ class PlotInstrumentResponseC(MetadataGraphicGenerator, GraphicMetaData):
         MetadataGraphicGenerator.__init__(self,inputDir, outputDir, outputModel, outputFile, outputFormat)
         GraphicMetaData.__init__(self, csvFileName, csvFieldNames)
         self.channel=channel
-
-    """def generateName(self):
-
-        #Le modèle de nom du fichier de sortie pourrait être, par défaut :
-        #"<NETCODE>.#S.#L.<STACODE>.InstrumentResponseS.jpeg"
-
-        outModel = self.outputModel
-        outFile = outModel.generateName() + self.outputFormat
-        if self.outputDir != None:
-            outFile = self.outputDir+outFile
-        return outFile"""
 
     def generate(self):
 
@@ -340,11 +328,11 @@ class PlotInstrumentResponseC(MetadataGraphicGenerator, GraphicMetaData):
             outFile = self.generateName()
 
 
-        inv = inv.select(station='*', channel=self.channel)	
+        inv =inv.select(station='*', channel=self.channel)	
         #inv.plot_response(0.001, outfile=self.outputFile, label_epoch_dates=True)
         print('Generate image: '+outFile)
         inv.plot_response(0.001, outfile=outFile)
-        self.generateCSV([self.channel, os.path.abspath(outfile)])
+        self.generateCSV([self.channel, os.path.abspath(outFile)])
 
 
 class  PlotTimeWaveformsS(MeasuredDataGraphicGenerator, GraphicMetaData):
@@ -389,60 +377,8 @@ class  PlotTimeWaveformsS(MeasuredDataGraphicGenerator, GraphicMetaData):
         print('Generate image: '+outFile)
         st.plot(outfile=outFile, equal_scale = False)
         #st.plot(outfile=self.outputFile)
-        self.generateCSV([self.sta, self.startTime, self.endTime, outFile])
+        self.generateCSV([self.sta, self.startTime, self.endTime, os.path.abspath(outFile)])
 
-class  L2B_nsplot_sTimeWaveforms_RemResp(MeasuredDataGraphicGenerator, MetadataGraphicGenerator, GraphicMetaData):
-
-    def __init__(self, inputDir, iXMLDir, outputFile, outputFormat=None, station="*", channel="*", startTime=None, endTime=None, duration=None, csvFileName="", csvFieldNames=[]):
-        MeasuredDataGraphicGenerator.__init__(self,inputDir,outputFile, outputFormat, station, channel, startTime, endTime, duration)
-        MetadataGraphicGenerator.__init__(self, iXMLDir, outputFile, outputFormat)
-        GraphicMetaData.__init__(self, csvFileName, csvFieldNames)
-
-    def generate(self):
-        """
-        Provide waveforms of all (or a subset of) channels of a station
-        Fournir des graphes/courbe de series temporelles, avec tous les canaux, pour une station.      
-        Fournir diagramme de séries temporelles pour chaque station, 
-        relativement à un événement sismique particulier (Doc Olivier)
-        """
-
-        if self.sta == "*":
-            station=None
-        else:
-            station=self.sta
-        print("station: ", station)
-        inFile = self.getInputFile(station)
-        print("inFile : ", inFile)
-        inv = read_inventory(inFile,'STATIONXML')
-
-        st = self.getStream()
-        print(st)
-        st2 = st.copy()
-        print("st2 : ", st2)
-        st2.remove_response(inventory=inv, output="VEL")
-        st2.plot(outfile=self.outputFile)        
-        #st.plot(outfile=self.outputFile, equal_scale = False)
-        #st.plot(outfile=self.outputFile)
-        self.generateCSV([self.sta, self.startTime, self.endTime, self.outputFile])
-
-class L3B_nsplot_cTimeWaveforms(MeasuredDataGraphicGenerator, GraphicMetaData):
-
-    def __init__(self, inputDir,outputFile, outputFormat=None, station="*", channel="*", startTime=None, endTime=None, duration=None, csvFileName="", csvFieldNames=[]):
-        MeasuredDataGraphicGenerator.__init__(self,inputDir,outputFile, outputFormat, station, channel, startTime, endTime, duration)
-        GraphicMetaData.__init__(self, csvFileName, csvFieldNames)
-        
-
-    def generate(self):
-        """
-        Provide plots of waveform of the same channel of all stations 
-        Fournir graphes/courbes de réponse instrumentale, avec tous les canaux, pour une station)
-        """
-
-        st = self.getStream()
-        #print(st)
-        st.plot(outfile=self.outputFile, equal_scale = False)
-        #st.plot(outfile=self.outputFile)
-        self.generateCSV([self.chan, self.startTime, self.endTime, self.outputFile])
 
 class PlotTimeWaveformsC(MeasuredDataGraphicGenerator, MetadataGraphicGenerator, GraphicMetaData):
 
@@ -484,15 +420,28 @@ class PlotTimeWaveformsC(MeasuredDataGraphicGenerator, MetadataGraphicGenerator,
         else:
             #st.plot(outfile=self.outputFile, equal_scale = False)
             st.plot(outfile=outFile)
+        print('Generate image: '+outFile)
         self.generateCSV([self.chan, self.startTime, self.endTime, os.path.abspath(outFile)])
 
-class L3_nsplot_cPPSD(MeasuredDataGraphicGenerator, MetadataGraphicGenerator, GraphicMetaData):
 
-    def __init__(self, inputDir, iXMLDir, outputFile, outputFormat=None, station="*", channel="*", startTime=None, endTime=None, duration=None, csvFileName="", csvFieldNames=[]):
-        MeasuredDataGraphicGenerator.__init__(self,inputDir,outputFile, outputFormat, station, channel,  startTime, endTime, duration)
-        MetadataGraphicGenerator.__init__(self, iXMLDir, outputFile, outputFormat)
+class PlotPPSDSC(MeasuredDataGraphicGenerator, MetadataGraphicGenerator, GraphicMetaData):
+
+    def __init__(self, inputDir, iMetaFile, outputDir=None, outputModel=None, outputFile=None, outputFormat=None, station="*", channel="*", startTime=None, endTime=None, duration=None, csvFileName="", csvFieldNames=[], ppsdDir="", ppsdNameModel=None, ppsdFormat=""):
+        MeasuredDataGraphicGenerator.__init__(self,inputDir, outputDir, outputModel, outputFile, outputFormat, station, channel, startTime, endTime, duration)
+        MetadataGraphicGenerator.__init__(self, iMetaFile, outputDir, outputModel, outputFile, outputFormat)
         GraphicMetaData.__init__(self, csvFileName, csvFieldNames)
 
+        self.ppsdDir=ppsdDir
+        self.ppsdNameModel=ppsdNameModel
+        self.ppsdFormat=ppsdFormat
+
+    def generatePPSDName(self):
+
+        ppsdModel = self.ppsdNameModel
+        ppsdFile = ppsdModel.generateName() + self.ppsdFormat
+        if self.ppsdDir != None:
+            ppsdFile = self.ppsdDir+ppsdFile
+        return ppsdFile
 
     def generate(self):
         """
@@ -505,60 +454,120 @@ class L3_nsplot_cPPSD(MeasuredDataGraphicGenerator, MetadataGraphicGenerator, Gr
         else:
             station=self.sta
         print("station: ", station)
-        inFile = self.getInputFile(station)
-        print("inFile : ", inFile)
+
+        inFile =self.iMetaDataDir
+        #print('channel: ' +self.chan)
         inv = read_inventory(inFile,'STATIONXML')
+        inv = inv.select(station=self.sta, channel=self.chan)
+        outFile = self.outputFile
+        if  outFile == None:
+            self.outputModel.setPrefix(inv[0].code+'.'+self.sta+'.#L.'+self.chan+'.')
+            outFile = self.generateName()
+
+        self.ppsdNameModel.setPrefix(inv[0].code+'.'+self.sta+'.#L.'+self.chan+'.')
+        ppsdFileName=self.generatePPSDName()
+
         st = self.getStream()
-        print(st)
-        ppsd = PPSD(st[1].stats, metadata=inv)
-        ppsd.add(st)
-        print(ppsd.times_processed[:2])
-        #print("number of psd segments:", len(ppsd.times_processed))
-        ppsd.plot(self.outputFile)
-        self.generateCSV([self.sta, self.outputFile])
-
-"""
-class L4_nsplot_csPPSD, for a number of stations ? problem with SDS, can not have more than one station in the client SDS root
-"""
-
-class L4_nsplot_csPPSD(MeasuredDataGraphicGenerator, MetadataGraphicGenerator, GraphicMetaData):
-
-    def __init__(self, inputDir, iXMLDir, outputFile, outputFormat=None, station="*", channel="*", startTime=None, endTime=None, duration=None, csvFileName="", csvFieldNames=[], ppsdFileName=""):
-        MeasuredDataGraphicGenerator.__init__(self,inputDir,outputFile, outputFormat, station, channel,  startTime, endTime, duration)
-        MetadataGraphicGenerator.__init__(self, iXMLDir, outputFile, outputFormat)
-        GraphicMetaData.__init__(self, csvFileName, csvFieldNames)
-        self.ppsdFileName=ppsdFileName
-        if re.match('..H', channel) != None:
-            self.isHydrophone = True
-        else:
-            self.isHydrophone = False
-
-    def generate(self):
-        """
-        Provide graphical representation of the ppsd of a station 
-        (fournit diagramme probabiliste des Densités Spectrales de Puissance pour chaque canal, 
-        de code distinct, parmi toutes les stations)
-        """
-        if self.sta == "*":
-            station=None
-        else:
-            station=self.sta
-        print("station: ", station)
-        inFile = self.getInputFile(station)
-        print("inFile : ", inFile)
-        inv = read_inventory(inFile,'STATIONXML')
-        st = self.getStream()
-        print(st)
-        if self.isHydrophone:
+        #print(st)
+        if self.isHydrophone():
             print('is hydrophone')
             #ppsd = PPSD(st[0].stats, metadata=inv, db_bins = (-40, 80, 1.0), special_handling = 'hydrophone')
             ppsd = PPSD(st[0].stats, metadata=inv, db_bins = (-80, 80, 1.0), special_handling = 'hydrophone')
         else:
             ppsd = PPSD(st[0].stats, metadata=inv)
         ppsd.add(st)
-        print(ppsd.times_processed[:2])
+        #print(ppsd.times_processed[:2])
         #print("number of psd segments:", len(ppsd.times_processed))
-        print(self.ppsdFileName)
-        ppsd.save_npz(self.ppsdFileName)
-        ppsd.plot(self.outputFile)
-        self.generateCSV([self.sta, self.outputFile])
+        print(ppsdFileName)
+        ppsd.save_npz(ppsdFileName)
+        ppsd.plot(outFile)
+        print('Generate image: '+outFile)
+        self.generateCSV([self.sta, os.path.abspath(outFile)])
+
+class PlotPPSDC(MetadataGraphicGenerator, GraphicMetaData):
+
+    def __init__(self, iMetaFile, outputDir=None, outputModel=None, outputFile=None, outputFormat=None, channel="*", csvFileName="", csvFieldNames=[], ppsdDir="", ppsdNameModel=None, ppsdFormat=""):
+
+        MetadataGraphicGenerator.__init__(self, iMetaFile, outputDir, outputModel, outputFile, outputFormat)
+        GraphicMetaData.__init__(self, csvFileName, csvFieldNames)
+	
+        self.chan = channel
+        self.ppsdDir=ppsdDir
+        self.ppsdNameModel=ppsdNameModel
+        self.ppsdFormat=ppsdFormat
+        inFile =self.iMetaDataDir
+        self.inventory=read_inventory(inFile,'STATIONXML')
+
+    def generatePPSDName(self):
+
+        ppsdModel = self.ppsdNameModel
+        ppsdFile = ppsdModel.generateName() + self.ppsdFormat
+        if self.ppsdDir != None:
+            ppsdFile = self.ppsdDir+ppsdFile
+        return ppsdFile
+
+    def createChannelStationsDictForNetwork(self, net):
+        """Create a dictionary with the channel code as key and a set of station codes as value
+        """        
+       
+        channelStations={}
+        for i in range(len(self.inventory.get_contents()['networks'])):
+            if self.inventory[i].code == net:
+                for j in range(len(self.inventory.get_contents()['stations'])):
+                    for k in range(len(self.inventory[i][j].get_contents()['channels'])):
+                        channelStations[self.inventory[i][j][k].code]=set()
+                for j in range(len(self.inventory.get_contents()['stations'])):
+                    for k in range(len(self.inventory[i][j].get_contents()['channels'])):
+                        channelStations[self.inventory[i][j][k].code].add(self.inventory[i][j].code)
+
+        return channelStations
+
+    def generate(self):
+        """
+        Provide graphical representation of the ppsd of the same channel of all stations 
+        (fournit diagramme probabiliste des Densités Spectrales de Puissance pour chaque canal, 
+        de code distinct, parmi toutes les stations)
+        """
+        
+        if (re.match('..H', self.chan)) != None:
+            isHydrophone = True
+        else:
+            isHydrophone = False
+
+        outFile = self.outputFile
+        if  outFile == None:
+            self.outputModel.setPrefix(self.inventory[0].code+'.#S.#L.'+self.chan+'.')
+            outFile = self.generateName()
+
+        fig, ax = plt.subplots()
+        if not isHydrophone:
+            period_lim=(0.01, 1000)
+            for periods, noise_model in (get_nhnm(), get_nlnm()):
+                xdata3 = periods
+                #ax.plot(xdata3, noise_model, '0.4', linewidth=2)
+                ax.plot(xdata3, noise_model, linestyle=(':'), linewidth=2, color='grey')
+
+
+        channelStations=self.createChannelStationsDictForNetwork(self.inventory[0].code) 
+        for station in channelStations[self.chan]:
+            self.ppsdNameModel.setPrefix(self.inventory[0].code+'.'+station+'.#L.'+self.chan+'.')
+            ppsdFileName=self.generatePPSDName()
+            if os.path.exists(ppsdFileName):
+                ppsd =  PPSD.load_npz(ppsdFileName) # ex '4G.LSV6A.BHZ.PPSDSC.npz'
+                print("read npz file : " + ppsdFileName)
+                periods, percentile_values = ppsd.get_percentile()
+                ax.plot(periods, percentile_values, label=station)
+            else:
+                print("File : "+ppsdFileName+" does exist")
+
+        ax.semilogx()
+        if not isHydrophone:
+            ax.set_xlim(period_lim)
+        ax.set_xlabel('period  [s]')
+        ax.set_ylabel('Amplitude [db]')
+        ax.set_title('Median PSD plots for channel code '+ self.chan+ ', all stations')
+        ax.legend()
+        plt.savefig(outFile)
+        plt.close()
+        print('Generate image: '+outFile)
+        self.generateCSV([self.chan, os.path.abspath(outFile)])
