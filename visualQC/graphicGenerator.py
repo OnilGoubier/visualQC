@@ -65,7 +65,8 @@ class NameModel():
 
     """
 
-    def __init__(self, prefix='', infix='', suffix=''):
+    def __init__(self, model='', prefix='', infix='', suffix=''):
+        self.model = model
         self.prefix=prefix
         self.infix=infix
         self.suffix=suffix
@@ -77,10 +78,25 @@ class NameModel():
         self.infix=anInfix
 
     def setSuffix(self, aSuffix):
-        self.suffix=aSuffix    
+        self.suffix=aSuffix
+
+    def getModel(self):
+        return self.model    
 
     def generateName(self):
         return self.prefix + self.infix + self.suffix
+
+    def replaceNetwork(self, net):
+        self.model = self.model.replace('%N', net)
+        #return self.model
+
+    def replaceStation(self, sta):
+        self.model = self.model.replace('%S', sta)
+        #return self.model
+
+    def replaceChannel(self, chan):
+        self.model = self.model.replace('%C', sta)
+        #return self.model
 
 class GraphicGenerator(ABC):
 
@@ -94,6 +110,14 @@ class GraphicGenerator(ABC):
 
         outModel = self.outputModel
         outFile = outModel.generateName() + self.outputFormat
+        if self.outputDir != None:
+            outFile = self.outputDir+outFile
+        return outFile
+
+    def generateNameFromModel(self):
+
+        outModel = self.outputModel
+        outFile = outModel.getModel() + self.outputFormat
         if self.outputDir != None:
             outFile = self.outputDir+outFile
         return outFile
@@ -270,8 +294,9 @@ class PlotStationsMap(MetadataGraphicGenerator):
         #print(inv[0].code)
         #print(self.outSuffix)
         if  outFile == None:
-            self.outputModel.setPrefix(inv[0].code+'.#S.#L.#C.')
-            outFile = self.generateName()
+            #self.outputModel.setPrefix(inv[0].code+'.#S.#L.#C.')
+            self.outputModel.replaceNetwork(inv[0].code)
+            outFile = self.generateNameFromModel()
         print('Generate image: '+outFile)
         inv.plot(projection="local", resolution="i", outfile=outFile)
 

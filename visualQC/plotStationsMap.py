@@ -13,12 +13,13 @@ import configparser
 """
 example:
 
-$ ./plotStationsMap.py /home/onil/IPGP2020/DocumentsTravail/Obs_Parcs/2007-.MOMAROBS/2007-2008.MOMAR_A/4G.STATION.xml
+$ ./plotStationsMap.py /stationXML/directory/filename.xml
 
-$ ./plotStationsMap.py /home/onil/IPGP2020/DocumentsTravail/Obs_Parcs/2007-.MOMAROBS/2007-2008.MOMAR_A/4G.STATION.xml --output myStationMap.jpeg
+$ ./plotStationsMap.py /stationXML/directory/filename.xml --output myStationMap.jpeg
 
 If the package is installed using pip
-$ plotStationsMap /home/onil/IPGP2020/DocumentsTravail/Obs_Parcs/2007-.MOMAROBS/2007-2008.MOMAR_A/4G.#S.STATION.xml
+$ plotStationsMap /stationXML/directory/filename.xml
+
 """
 
 def main():
@@ -29,6 +30,7 @@ def main():
     outInfix = 'StaMap.'
     outSuffix =''
     outFmt = 'jpeg'
+    outModel= '%N.#S.#L.#C.StationsMap.'
 
     # config
     config_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 
@@ -54,6 +56,7 @@ def main():
         if confExists:
             outDir = config.get('STATIONMAP', 'RELIMAGEDIR')
             outInfix = config.get('STATIONMAP', 'OUTINFIX')
+            outModel = config.get('STATIONMAP', 'NAMEMODEL')
         if not os.path.isdir(outDir):
             os.makedirs(outDir)
         outFile = None
@@ -65,7 +68,7 @@ def main():
             outFmt = config.get('ALLPLOTS', 'OUTFORMAT')
     
     if args.iFile:
-        outNameModel = NameModel(outPrefix, outInfix, outSuffix)   
+        outNameModel = NameModel(outModel, outPrefix, outInfix, outSuffix)   
         grGenerator=PlotStationsMap(args.iFile, outDir, outNameModel, outFile, outFmt)
         grGenerator.generate()
     
