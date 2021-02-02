@@ -19,11 +19,13 @@ $plotInstrumentResponseS /home/onil/IPGP2020/DocumentsTravail/Obs_Parcs/2007-.MO
 def main():
 
     # defaultvalue
-    outDir='.'
+    outDir=os.getcwd()
     outPrefix = ''
     outInfix = 'instrumentResponseS.'
     outSuffix =''
     outFmt = 'jpeg'
+    csvDir=os.getcwd()
+    csvFileName = 'instrumentResponseS.csv'
 
     # config
     config_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 
@@ -64,7 +66,7 @@ def main():
             outFmt = config.get('ALLPLOTS', 'OUTFORMAT')
 
     if args.result:
-        print(args.result)
+        #print(args.result)
         csvAbsFileName=args.result
     else:
         if confExists:

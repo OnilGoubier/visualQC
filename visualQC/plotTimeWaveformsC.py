@@ -20,13 +20,18 @@ $plotTimeWaveformsC /home/onil/IPGP2020/DocumentsTravail/Obs_Parcs/2007-.MOMAROB
 def main():
 
     #default
-    outDir = '.'
+    outDir = os.getcwd()
     outPrefix = ''
     outInfix = 'timeWaveformsC.'
     outSuffix =''
     outFmt = 'jpeg'
-    csvDir='.'
+    csvDir= os.getcwd()
     csvFileName = 'timeWaveformsC.csv'
+    startTime=None
+    endTime=None
+    eventTime=None
+    duration=60
+    sta="*"
 
     # config
     config_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 
@@ -34,15 +39,9 @@ def main():
     config = configparser.ConfigParser()                                     
     confExists = config.read(config_filename)
 
-    startTime=None
-    endTime=None
-    eventTime=None
-    duration=60
-    sta="*"
-
     parser = argparse.ArgumentParser(description='Provide waveforms of a channel for all stations (fournit graphe/courbe de series temporelles pour un canal de toutes les stations)')
-    parser.add_argument('iPath', metavar='INPUTPATH', help='<INPUTPATH> input file path / directory')
-    #parser.add_argument('iXMLPath', metavar='INPUTXMLPATH', help='<INPUTXMLPATH> input XML file path / directory')
+    parser.add_argument('iPath', metavar='INPUTPATH', help='<INPUTPATH> input SDS root directory')
+
     parser.add_argument('iMetaFile', metavar='INPUTMETAFILE', help='<INPUTMETAFILE> input file, wildcards accepted (please write the name with wildcards * between quotes, ex. "*.xml")')
     parser.add_argument('--station', metavar='STACOD', required=False,  help='<STACOD> Optional station code ')
     parser.add_argument('--channel', metavar='CHACOD', required=True,  help='<CHACOD> Required channel code ')
@@ -54,12 +53,8 @@ def main():
     parser.add_argument("--endTime",  metavar='END_TIME', required=False, help='<END_TIME> Optional end time')
     parser.add_argument("--duration",  metavar='SECONDCOUNT', required=False, type=int, help='<SECONDCOUNT> Optional number of second for each station waveform plot, this usually corresponds to the duration of a seismic event')
     parser.add_argument('--outUnit', metavar='OUTUNIT', required=False,  help='<OUTUNIT> Optional output unit. The valid values are: DISP, VEL or ACC. The fault value is VEL')
-#    parser.add_argument('--removeResponse', metavar='REMRESP', required=False, type=bool, help='<REMRESP> Optional remove response, True of False. The dafault value is True. Deconvolve instrument response.')
-    '''remResp_parser = parser.add_mutually_exclusive_group(required=False)
-    remResp_parser.add_argument('--removeResponse', dest='removeResponse', action='store_true')
-    remResp_parser.add_argument('--no-removeResponse', dest='removeResponse', action='store_false')
-    parser.set_defaults(removeResponse=True)'''
     parser.add_argument('--no-removeResponse', default=False, action="store_true", help=' Optional no remove response, not to deconvolve instrument response. The default value is False.')
+    parser.add_argument('--equalScale', default=False, action="store_true", help=' Optional equal scale, to plot all waveforms in equal scale. The default value is False.')
 
 
 
@@ -75,21 +70,21 @@ def main():
     else:
         remResp = True
 
-    print(remResp)
+    #print("Remove response : " + str(remResp))
 
-    #outFile = outFile+"_"+outUnit
+    if args.equalScale:
+        equalScale = args.equalScale
+    else:
+        equalScale = False
+
+    #print("Equal scale : " + str(equalScale))
 
     if args.station:
         sta=args.station
-        #print(sta)
-        #if not args.output:
-            #outFile=outFile+'_'+sta #Images directory should have been created
 
     if args.channel:
         chan=args.channel
-        #print(chan)
-        #if not args.output:
-            #outFile=outFile+'_'+chan
+
 
     if args.output:
         outDir = os.path.dirname(args.output)
@@ -100,7 +95,6 @@ def main():
     else:
         if confExists:
             outDir = config.get('TIMEWAVEFORMSC', 'RELIMAGEDIR')
-            #outSuffix = config.get('TIMEWAVEFORMSS', 'OUTSUFFIX')
             outInfix = config.get('TIMEWAVEFORMSC', 'OUTINFIX')
         if not os.path.isdir(outDir):
             os.makedirs(outDir)
@@ -108,7 +102,7 @@ def main():
 
     if args.outFormat:
         outFormat=args.outFormat
-        print(outSuffix)
+        #print(outSuffix)
     else:
         if confExists:
             outFormat = config.get('ALLPLOTS', 'OUTFORMAT')   
@@ -144,7 +138,7 @@ def main():
     if args.iPath:
         outNameModel = NameModel(outPrefix, outInfix, outSuffix)
         csvFieldNames=['channel code', ' start time', ' end time', ' Absolute Path File']   
-        grGenerator=PlotTimeWaveformsC(args.iPath, iMetaFile, outDir, outNameModel, outFile, outFormat, station=sta, channel=chan, startTime=startTime, endTime=endTime, duration=duration, csvFileName=csvAbsFileName, csvFieldNames=csvFieldNames, outUnit=outUnit, removeResponse=remResp )
+        grGenerator=PlotTimeWaveformsC(args.iPath, iMetaFile, outDir, outNameModel, outFile, outFormat, station=sta, channel=chan, startTime=startTime, endTime=endTime, duration=duration, csvFileName=csvAbsFileName, csvFieldNames=csvFieldNames, outUnit=outUnit, removeResponse=remResp, equalScale = equalScale )
         grGenerator.generate()
 
 if __name__ == "__main__":

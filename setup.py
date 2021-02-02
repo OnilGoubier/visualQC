@@ -5,14 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="visualQC", 
-    version="0.0.1.4.5",
-    # should add graphicGenerator.py and dirAndFiles.py here, other solution ?
-    #scripts=[ 
-    #    'visualQC/graphicGenerator.py', 
-    #    'visualQC/dirAndFiles.py' ],
-
-    #    'visualQC/plotStationsMap.py',
-    #    'visualQC/plotDataAvailability.py'],
+    version="0.0.1.4.6",
     author="IPGP",   
     author_email="goubier@ipgp.fr",
     description="Scripts used to generate data plots",
@@ -20,13 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/OnilGoubier/visualQC",
     packages = ['visualQC'],
-    #package_dir={"visualQC": 'visualQC'},
-    #package_dir={'': 'visualQC'},
-    #packages=setuptools.find_packages(where='visualQC'),
-    #packages=setuptools.find_packages(),
-    # package_data and include_package_data = True are necessary to include config in .whl
     package_data={"visualQC": ['visualQC/config/config.ini']},
-    #package_data={"": ['visualQC/config/config.ini', 'visualQC/data/noise_models.npz']},
     include_package_data=True,
     data_files=[('data', ['visualQC/data/noise_models.npz'])],
 
@@ -57,8 +44,6 @@ setuptools.setup(
             'ModuleName = visualQC.graphicGenerator:ModuleName', 
 
     ],
-    #dependencies, package on pypi
-    #install_requires=['obspy',],
 },
 
 )

@@ -24,13 +24,18 @@ $plotTimeWaveformsS /home/onil/IPGP2020/DocumentsTravail/Obs_Parcs/2007-.MOMAROB
 def main():
 
     #default
-    outDir = '.'
+    outDir = os.getcwd()
     outPrefix = ''
     outInfix = 'timeWaveformsS.'
     outSuffix =''
     outFmt = 'jpeg'
-    csvDir='.'
+    csvDir=os.getcwd()
     csvFileName = 'timeWaveformsS.csv'
+    startTime=None
+    endTime=None
+    eventTime=None
+    duration=60
+    sta="*"
 
     # config
     config_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 
@@ -38,11 +43,6 @@ def main():
     config = configparser.ConfigParser()                                     
     confExists = config.read(config_filename)
 
-    startTime=None
-    endTime=None
-    eventTime=None
-    duration=60
-    sta="*"
     
     parser = argparse.ArgumentParser(description='Provide waveforms of all (or a subset of) channels of a station (fournit graphe/courbe de réponse instrumentale, avec tous les canaux, pour une station). Fournit diagramme de séries temporelles pour chaque station, relativement à un événement sismique particulier (Doc Olivier)')
     parser.add_argument('iPath', metavar='INPUTDIR', help='<INPUTDIR> input file path / directory')
@@ -69,7 +69,6 @@ def main():
     else:
         if confExists:
             outDir = config.get('TIMEWAVEFORMSS', 'RELIMAGEDIR')
-            #outSuffix = config.get('TIMEWAVEFORMSS', 'OUTSUFFIX')
             outInfix = config.get('TIMEWAVEFORMSS', 'OUTINFIX')
         if not os.path.isdir(outDir):
             os.makedirs(outDir)

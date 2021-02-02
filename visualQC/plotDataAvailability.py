@@ -23,23 +23,22 @@ onil@dKelana: plotDataAvailability ~/IPGP2020/DocumentsTravail/DATA/NodeA/FileSt
 def main():
 
     #default
-    outDir='.'
+    outDir= os.getcwd()
     outPrefix = ''
-    outInfix = 'DataAvailability'
+    outInfix = 'DataAvailability.'
     outSuffix =''
     outFmt = 'jpeg'
     mseedDirBaseName = '/*/miniseed_basic/*.mseed'
     sdsDirBaseName = '/SDS_corrected/'
+    startTime=None
+    endTime=None
+    eventTime=None
 
     #avec config
     config_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 
                                'config', 'config.ini')
     config = configparser.ConfigParser()                                     
     confExists = config.read(config_filename)
-
-    startTime=None
-    endTime=None
-    eventTime=None
 
     parser = argparse.ArgumentParser(description='Provide data availability of all stations of the network, fournir la disponibilité de données des stations du réseau)')
     parser.add_argument('iPath', metavar='INPUTDIR', help='<INPUTDIR> input file path / directory')

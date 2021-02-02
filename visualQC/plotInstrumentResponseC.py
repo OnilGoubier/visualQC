@@ -19,12 +19,12 @@ $plotInstrumentResponseC /home/onil/IPGP2020/DocumentsTravail/Obs_Parcs/2007-.MO
 def main():
 
     # defaultvalue
-    outDir='.'
+    outDir=os.getcwd()
     outPrefix = ''
     outInfix = 'instrumentResponseC.'
     outSuffix =''
     outFmt = 'jpeg'
-    csvDir='.'
+    csvDir=os.getcwd()
     csvFileName = 'instrumentResponseC.csv'
 
     # config

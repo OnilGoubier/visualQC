@@ -24,7 +24,7 @@ $ plotStationsMap /home/onil/IPGP2020/DocumentsTravail/Obs_Parcs/2007-.MOMAROBS/
 def main():
 
     # defaultvalue
-    outDir='.'
+    outDir=os.getcwd()
     outPrefix = ''
     outInfix = 'StaMap.'
     outSuffix =''

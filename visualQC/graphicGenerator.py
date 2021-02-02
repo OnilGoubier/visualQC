@@ -187,23 +187,29 @@ class MeasuredDataGraphicGenerator(DurationBasedGraphicGenerator):
         self.iDataDir=inputDir
         self.sta=station
         self.chan=channel
+        self.client = Client(self.iDataDir)
 
     def isHydrophone(self):
         if re.match('..H', self.chan) != None:
-            #self.isHydrophone = True
             return True
         else:
-            #self.isHydrophone = False
-            return False            
+            return False
+
+    def findNetworkCodes(self):
+        allStations = self.client.get_all_stations()
+        net=set()
+        for st in allStations:
+            net.add(st[0])
+        return list(net)           
 
     #input from SDS file
     def getStream(self):
-        client = Client(self.iDataDir)
+        #client = Client(self.iDataDir)
         #print(self.sta)
         #print(self.iDataDir)
         #print(self.startTime)
         #print(self.endTime)
-        return client.get_waveforms(self.net, self.sta, self.loc, self.chan, self.startTime, self.endTime)
+        return self.client.get_waveforms(self.net, self.sta, self.loc, self.chan, self.startTime, self.endTime)
 
     @abstractmethod
     def generate(self):
@@ -226,14 +232,28 @@ class GraphicMetaData:
     def  generateCSV(self, data):
 
         if os.path.exists(self.csvFileName):
-            with open(self.csvFileName, 'a') as csvfile:
-                mywriter = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
-                mywriter.writerow(data)
-        else: 
-            with open(self.csvFileName, 'w', newline='') as csvfile:
-                mywriter = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
-                mywriter.writerow(self.csvFieldNames)
-                mywriter.writerow(data) 
+            try:
+                with open(self.csvFileName, 'a') as csvfile:
+                    mywriter = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
+                    mywriter.writerow(data)
+            except IOError as e:
+                print(e)
+                print(sys.exc_type)
+                print("I/O error ".format(e.errno, e.strerror))
+            except: #handle other exceptions such as attribute errors
+                print("Unexpected error:", sys.exc_info()[0])
+        else:
+            try: 
+                with open(self.csvFileName, 'w', newline='') as csvfile:
+                    mywriter = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
+                    mywriter.writerow(self.csvFieldNames)
+                    mywriter.writerow(data)
+            except IOError as e:
+                print(e)
+                print(sys.exc_type)
+                print("I/O error ".format(e.errno, e.strerror))
+            except: #handle other exceptions such as attribute errors
+                print("Unexpected error:", sys.exc_info()[0]) 
 
 class PlotStationsMap(MetadataGraphicGenerator):
 
@@ -250,7 +270,7 @@ class PlotStationsMap(MetadataGraphicGenerator):
         #print(inv[0].code)
         #print(self.outSuffix)
         if  outFile == None:
-            self.outputModel.setPrefix(inv[0].code+'.')
+            self.outputModel.setPrefix(inv[0].code+'.#S.#L.#C.')
             outFile = self.generateName()
         print('Generate image: '+outFile)
         inv.plot(projection="local", resolution="i", outfile=outFile)
@@ -341,22 +361,7 @@ class  PlotTimeWaveformsS(MeasuredDataGraphicGenerator, GraphicMetaData):
 
         MeasuredDataGraphicGenerator.__init__(self,inputDir, outputDir, outModel, outputFile, outputFormat, station, channel, startTime, endTime, duration)
         GraphicMetaData.__init__(self, csvFileName, csvFieldNames)
-        #self.outInfix = outInfix
 
-    """def generateName(self):
-
-        # Olivier comments : Des informations temporelles pourraient être ajoutées :
-        # "<NETCODE>.<#STACODE>.<LOCCODE>.#C.<TIMERANGE>.STimeWaveforms.jpeg"
-        # sous la forme : "yyyymmddThhmmss-yyyymmddThhmmss"
-        # (année, mois et jour séparés, par le symbole "T", de heure, minute et seconde)
-
-        outModel = self.outputModel
-        outModel.setPrefix(self.sta+'.')
-        outFile = outModel.generateName() + self.outputFormat
-        #outFile = self.sta + self.outInfix + self.outFormat
-        if self.outputDir != None:
-            outFile = self.outputDir+outFile
-        return outFile"""
 
     def generate(self):
         """
@@ -368,10 +373,14 @@ class  PlotTimeWaveformsS(MeasuredDataGraphicGenerator, GraphicMetaData):
 
         st = self.getStream()
         #print(st)
+        
+        netCodes = self.findNetworkCodes()
+        if len(netCodes) > 1:
+            print("there is more than one network, the first one will be plotted")
 
         outFile = self.outputFile
         if  outFile == None:
-            self.outputModel.setPrefix(self.sta+'.')
+            self.outputModel.setPrefix(netCodes[0]+'.'+self.sta+'.#L.#C.')
             outFile = self.generateName()
 
         print('Generate image: '+outFile)
@@ -382,12 +391,13 @@ class  PlotTimeWaveformsS(MeasuredDataGraphicGenerator, GraphicMetaData):
 
 class PlotTimeWaveformsC(MeasuredDataGraphicGenerator, MetadataGraphicGenerator, GraphicMetaData):
 
-    def __init__(self, inputDir, iMetaFile, outputDir=None, outputModel=None, outputFile=None, outputFormat=None, station="*", channel="*", startTime=None, endTime=None, duration=None, csvFileName="", csvFieldNames=[], outUnit="VEL", removeResponse=True):
+    def __init__(self, inputDir, iMetaFile, outputDir=None, outputModel=None, outputFile=None, outputFormat=None, station="*", channel="*", startTime=None, endTime=None, duration=None, csvFileName="", csvFieldNames=[], outUnit="VEL", removeResponse=True, equalScale=False):
         MeasuredDataGraphicGenerator.__init__(self,inputDir, outputDir, outputModel, outputFile, outputFormat, station, channel, startTime, endTime, duration)
         MetadataGraphicGenerator.__init__(self, iMetaFile, outputDir, outputModel, outputFile, outputFormat)
         GraphicMetaData.__init__(self, csvFileName, csvFieldNames)
         self.outUnit=outUnit
         self.removeResponse=removeResponse
+        self.equalScale=equalScale
 
     def generate(self):
         """
@@ -396,30 +406,35 @@ class PlotTimeWaveformsC(MeasuredDataGraphicGenerator, MetadataGraphicGenerator,
         """
 
         inFile =self.iMetaDataDir
-        print('channel: ' +self.chan)
+        #print('channel: ' +self.chan)
         inv = read_inventory(inFile,'STATIONXML')
-        inv = inv.select(station='*', channel=self.chan)
-        outFile = self.outputFile
-        if  outFile == None:
-            self.outputModel.setPrefix(inv[0].code+'.#S.#L.'+self.chan+'.')
-            outFile = self.generateName()
+        inv = inv.select(channel=self.chan)
 
         st = self.getStream()
-        #print(st)csv/timeWaveformsS/
-        print(self.removeResponse)
+        netCodes = self.findNetworkCodes()
+        if len(netCodes) > 1:
+            print("there is more than one network, the first one will be plotted")
+
+        outFile = self.outputFile
+        if  outFile == None:
+            self.outputModel.setPrefix(netCodes[0]+'.#S.#L.'+self.chan+'.')
+            outFile = self.generateName()
+
+        #print(self.removeResponse)
         if self.removeResponse:
-            print(self.removeResponse)
+            #print(self.removeResponse)
             st2 = st.copy()
-            print("st2 : ", st2)
-            print(self.outUnit)
+            #print("st2 : ", st2)
+            #print(self.outUnit)
             #plotFile="../Images/TWfComp/L3B_nsplot_cTWaveforms_RemResp_"+self.outUnit+"_stepPlot_"+self.sta+"_"+self.chan+".jpeg"
             #st2.remove_response(inventory=inv, output="VEL")
             #st2.remove_response(inventory=inv, output=self.outUnit, plot=plotFile)
             st2.remove_response(inventory=inv, output=self.outUnit)
-            st2.plot(outfile=outFile)
+            st2.plot(outfile=outFile, equal_scale = self.equalScale)
         else:
-            #st.plot(outfile=self.outputFile, equal_scale = False)
-            st.plot(outfile=outFile)
+            #st.plot(outfile=outFile, equal_scale = False)
+            #st.plot(outfile=outFile)
+            st.plot(outfile=outFile, equal_scale = self.equalScale)
         print('Generate image: '+outFile)
         self.generateCSV([self.chan, self.startTime, self.endTime, os.path.abspath(outFile)])
 
@@ -453,7 +468,7 @@ class PlotPPSDSC(MeasuredDataGraphicGenerator, MetadataGraphicGenerator, Graphic
             station=None
         else:
             station=self.sta
-        print("station: ", station)
+        #print("station: ", station)
 
         inFile =self.iMetaDataDir
         #print('channel: ' +self.chan)
@@ -470,7 +485,7 @@ class PlotPPSDSC(MeasuredDataGraphicGenerator, MetadataGraphicGenerator, Graphic
         st = self.getStream()
         #print(st)
         if self.isHydrophone():
-            print('is hydrophone')
+            #print('is hydrophone')
             #ppsd = PPSD(st[0].stats, metadata=inv, db_bins = (-40, 80, 1.0), special_handling = 'hydrophone')
             ppsd = PPSD(st[0].stats, metadata=inv, db_bins = (-80, 80, 1.0), special_handling = 'hydrophone')
         else:
@@ -478,7 +493,7 @@ class PlotPPSDSC(MeasuredDataGraphicGenerator, MetadataGraphicGenerator, Graphic
         ppsd.add(st)
         #print(ppsd.times_processed[:2])
         #print("number of psd segments:", len(ppsd.times_processed))
-        print(ppsdFileName)
+        print("Saved PPSD : " + ppsdFileName)
         ppsd.save_npz(ppsdFileName)
         ppsd.plot(outFile)
         print('Generate image: '+outFile)
