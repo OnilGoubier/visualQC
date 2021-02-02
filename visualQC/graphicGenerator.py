@@ -319,7 +319,7 @@ class PlotDataAvailability(EventBasedGraphicGenerator):
 
         outFile = self.outputFile
         if  outFile == None:
-            outFile = self.generateName()
+            outFile = self.generateNameFromModel()
         self.command=self.command+' --output '+outFile
         #print(self.command)
         print('Generate image: '+outFile)
@@ -598,7 +598,7 @@ class PlotPPSDC(MetadataGraphicGenerator, GraphicMetaData):
                 periods, percentile_values = ppsd.get_percentile()
                 ax.plot(periods, percentile_values, label=station)
             else:
-                print("File : "+ppsdFileName+" does exist")
+                print("File : "+ppsdFileName+" does not exist")
 
         ax.semilogx()
         if not isHydrophone:

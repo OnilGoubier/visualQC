@@ -15,7 +15,7 @@ onil@laut: ./plotDataAvailability.py /media/onil/NodeA/FileStore-in/2007-.MOMARO
 
 onil@laut: ./plotDataAvailability.py /media/onil/NodeA/FileStore-in/2007-.MOMAROBS/2007-2008.MOMAR_A --format mseed
 
-Install with pip:
+Installed with pip:
 onil@dKelana: plotDataAvailability ~/IPGP2020/DocumentsTravail/DATA/NodeA/FileStore-in/2007-MOMAROBS/2007-2008.MOMAR_A/LSV5A
 
 """
@@ -28,6 +28,7 @@ def main():
     outInfix = 'DataAvailability.'
     outSuffix =''
     outFmt = 'jpeg'
+    outModel= 'DataAvailability.'
     mseedDirBaseName = '/*/miniseed_basic/*.mseed'
     sdsDirBaseName = '/SDS_corrected/'
     startTime=None
@@ -60,6 +61,7 @@ def main():
         if confExists:
             outDir = config.get('DTAVAILABILITY', 'RELIMAGEDIR')
             outInfix = config.get('DTAVAILABILITY', 'OUTINFIX')
+            outModel = config.get('DTAVAILABILITY', 'NAMEMODEL')
         if not os.path.isdir(outDir):
             os.makedirs(outDir)
         outFile = None
@@ -89,7 +91,7 @@ def main():
     if args.eventTime:
         eventTime=args.eventTime
 
-    outNameModel = NameModel(outPrefix, outInfix, outSuffix)
+    outNameModel = NameModel(outModel, outPrefix, outInfix, outSuffix)
     grGenerator=PlotDataAvailability(iDir, outDir, outNameModel, outFile, outFmt, startTime, endTime, eventTime)
     grGenerator.generate()
     
