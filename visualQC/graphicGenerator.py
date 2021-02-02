@@ -372,8 +372,11 @@ class PlotInstrumentResponseC(MetadataGraphicGenerator, GraphicMetaData):
         inv = read_inventory(inFile,'STATIONXML')
         outFile = self.outputFile
         if  outFile == None:
-            self.outputModel.setPrefix(inv[0].code+'.#S.#L.'+self.channel+'.')
-            outFile = self.generateName()
+            #self.outputModel.setPrefix(inv[0].code+'.#S.#L.'+self.channel+'.')
+            #outFile = self.generateName()
+            self.outputModel.replaceNetwork(inv[0].code)
+            self.outputModel.replaceChannel(self.channel)
+            outFile = self.generateNameFromModel()
 
 
         inv =inv.select(station='*', channel=self.channel)	

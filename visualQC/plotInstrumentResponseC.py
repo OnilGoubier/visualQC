@@ -24,6 +24,7 @@ def main():
     outInfix = 'instrumentResponseC.'
     outSuffix =''
     outFmt = 'jpeg'
+    outModel= '%N.#S.#L.%C.instrumentResponseC.'
     csvDir=os.getcwd()
     csvFileName = 'instrumentResponseC.csv'
 
@@ -57,6 +58,7 @@ def main():
         if confExists:
             outDir = config.get('INSTRESPONSEC', 'RELIMAGEDIR')
             outInfix = config.get('INSTRESPONSEC', 'OUTINFIX')
+            outModel = config.get('INSTRESPONSEC', 'NAMEMODEL')
         if not os.path.isdir(outDir):
             os.makedirs(outDir)
         outFile = None
@@ -79,7 +81,7 @@ def main():
         csvAbsFileName=csvDir+csvFileName
   
     if args.iFile:
-        outNameModel = NameModel(outPrefix, outInfix, outSuffix)
+        outNameModel = NameModel(outModel, outPrefix, outInfix, outSuffix)
         csvFieldNames=['channel code', ' Absolute Path File']   
         grGenerator=PlotInstrumentResponseC(args.iFile, outDir, outNameModel, outFile, outFmt, channel=channel, csvFileName=csvAbsFileName, csvFieldNames=csvFieldNames )
         grGenerator.generate()
