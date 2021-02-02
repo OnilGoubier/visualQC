@@ -345,8 +345,11 @@ class PlotInstrumentResponseS(MetadataGraphicGenerator, GraphicMetaData):
         inv = read_inventory(inFile,'STATIONXML')
         outFile = self.outputFile
         if  outFile == None:
-            self.outputModel.setPrefix(inv[0].code+'.'+self.station+'.')
-            outFile = self.generateName()
+            #self.outputModel.setPrefix(inv[0].code+'.'+self.station+'.')
+            #outFile = self.generateName()
+            self.outputModel.replaceNetwork(inv[0].code)
+            self.outputModel.replaceStation(self.station)
+            outFile = self.generateNameFromModel()
                 
         sta = inv[0].select(station=self.station)[0]
         print('Generate image: '+outFile)
