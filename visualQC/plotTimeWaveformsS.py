@@ -26,11 +26,12 @@ def main():
     #default
     outDir = os.getcwd()
     outPrefix = ''
-    outInfix = 'timeWaveformsS.'
+    outInfix = 'TimeWaveformsS.'
     outSuffix =''
     outFmt = 'jpeg'
+    outModel= '%N.#S.#L.#C.TimeWaveformsS.'
     csvDir=os.getcwd()
-    csvFileName = 'timeWaveformsS.csv'
+    csvFileName = 'TimeWaveformsS.csv'
     startTime=None
     endTime=None
     eventTime=None
@@ -70,6 +71,7 @@ def main():
         if confExists:
             outDir = config.get('TIMEWAVEFORMSS', 'RELIMAGEDIR')
             outInfix = config.get('TIMEWAVEFORMSS', 'OUTINFIX')
+            outModel = config.get('TIMEWAVEFORMSS', 'NAMEMODEL')
         if not os.path.isdir(outDir):
             os.makedirs(outDir)
         outFile = None
@@ -107,7 +109,7 @@ def main():
         endTime=startTime+duration
 
     if args.iPath:
-        outNameModel = NameModel(outPrefix, outInfix, outSuffix)
+        outNameModel = NameModel(outModel, outPrefix, outInfix, outSuffix)
         csvFieldNames=['station code', ' start time', ' end time', ' Absolute Path File']   
         grGenerator=PlotTimeWaveformsS(args.iPath, outDir, outNameModel, outFile, outFmt, station=sta, startTime=startTime, endTime=endTime, duration=duration, csvFileName=csvAbsFileName, csvFieldNames=csvFieldNames )
         grGenerator.generate()

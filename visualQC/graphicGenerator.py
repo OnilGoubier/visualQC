@@ -405,8 +405,11 @@ class  PlotTimeWaveformsS(MeasuredDataGraphicGenerator, GraphicMetaData):
 
         outFile = self.outputFile
         if  outFile == None:
-            self.outputModel.setPrefix(netCodes[0]+'.'+self.sta+'.#L.#C.')
-            outFile = self.generateName()
+            #self.outputModel.setPrefix(netCodes[0]+'.'+self.sta+'.#L.#C.')
+            #outFile = self.generateName()
+            self.outputModel.replaceNetwork(netCodes[0])
+            self.outputModel.replaceStation(self.sta)
+            outFile = self.generateNameFromModel()
 
         print('Generate image: '+outFile)
         st.plot(outfile=outFile, equal_scale = False)
