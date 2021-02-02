@@ -95,7 +95,7 @@ class NameModel():
         #return self.model
 
     def replaceChannel(self, chan):
-        self.model = self.model.replace('%C', sta)
+        self.model = self.model.replace('%C', chan)
         #return self.model
 
 class GraphicGenerator(ABC):
@@ -445,8 +445,11 @@ class PlotTimeWaveformsC(MeasuredDataGraphicGenerator, MetadataGraphicGenerator,
 
         outFile = self.outputFile
         if  outFile == None:
-            self.outputModel.setPrefix(netCodes[0]+'.#S.#L.'+self.chan+'.')
-            outFile = self.generateName()
+            #self.outputModel.setPrefix(netCodes[0]+'.#S.#L.'+self.chan+'.')
+            #outFile = self.generateName()
+            self.outputModel.replaceNetwork(netCodes[0])
+            self.outputModel.replaceChannel(self.chan)
+            outFile = self.generateNameFromModel()
 
         #print(self.removeResponse)
         if self.removeResponse:
