@@ -9,16 +9,12 @@ def main():
 
     #default
     outDir = os.getcwd()
-    outPrefix = ''
-    outInfix = 'PPSDC.'
-    outSuffix =''
     outFormat = 'jpeg'
+    outModel= '%N.%S.#L.%C.PPSDC.'
     csvDir=os.getcwd()
     csvFileName = 'PPSDC.csv'
     ppsdDir = os.getcwd()
-    ppsdPrefix=''
-    ppsdInfix='PPSD.'
-    ppsdSuffix=''
+    ppsdModel= '%N.%S.#L.%C.PPSD.'
     ppsdFormat='npz'
 
     # config
@@ -48,7 +44,7 @@ def main():
     else:
         if confExists:
             outDir = config.get('PPSDC', 'RELIMAGEDIR')
-            outInfix = config.get('PPSDC', 'OUTINFIX')
+            outModel = config.get('PPSDC', 'NAMEMODEL')
         if not os.path.isdir(outDir):
             os.makedirs(outDir)
         outFile = None
@@ -76,13 +72,13 @@ def main():
 
     if confExists:
         ppsdDir = config.get('PPSD', 'PPSDDIR')
-        ppsdInfix=config.get('PPSD', 'PPSDINFIX') 
+        ppsdModel=config.get('PPSD', 'NAMEMODEL') 
         if not os.path.isdir(ppsdDir):
             os.makedirs(ppsdDir)
         ppsdFormat = config.get('PPSD', 'PPSDFORMAT')
 
-    outNameModel = NameModel(outPrefix, outInfix, outSuffix)
-    ppsdNameModel = NameModel(ppsdPrefix, ppsdInfix, ppsdSuffix)
+    outNameModel = NameModel(outModel)
+    ppsdNameModel = NameModel(ppsdModel)
     csvFieldNames=['channel code', ' Absolute Path File']  
     grGenerator=PlotPPSDC(iMetaFile, outDir, outNameModel, outFile, outFormat, channel=channel,  csvFileName=csvAbsFileName, csvFieldNames=csvFieldNames, ppsdDir=ppsdDir, ppsdNameModel=ppsdNameModel, ppsdFormat=ppsdFormat)
     grGenerator.generate()

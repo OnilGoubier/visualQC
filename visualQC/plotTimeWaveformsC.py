@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from obspy import read_inventory
+#from obspy import read_inventory
 import os, argparse
 from visualQC.graphicGenerator import PlotTimeWaveformsC, NameModel
 from obspy import UTCDateTime
@@ -14,15 +14,12 @@ onil@dKelana$ ./plotTimeWaveformsC.py /home/onil/IPGP2020/DocumentsTravail/Obs_P
 
 Installed with pip:
 $plotTimeWaveformsC /home/onil/IPGP2020/DocumentsTravail/Obs_Parcs/2007-.MOMAROBS/2007-2008.MOMAR_A/LSV5A/SDS_corrected/SDS /home/onil/IPGP2020/DocumentsTravail/Obs_Parcs/2007-.MOMAROBS/2007-2008.MOMAR_A/4G.#S.STATION.xml --channel BDH --startTime  "2007-07-20T21:00:00" --endTime "2007-07-23T19:10:03" --removeResponse False
-
 """
 
 def main():
 
     #default
     outDir = os.getcwd()
-    outPrefix = ''
-    outInfix = 'timeWaveformsC.'
     outSuffix =''
     outFmt = 'jpeg'
     outModel= '%N.#S.#L.%C.TimewaveformsC.'
@@ -68,6 +65,7 @@ def main():
 
     if args.no_removeResponse:
         remResp = not args.no_removeResponse
+        outSuffix = outSuffix+config.get('TIMEWAVEFORMS', 'OUTREMRESP')
     else:
         remResp = True
 
@@ -75,6 +73,7 @@ def main():
 
     if args.equalScale:
         equalScale = args.equalScale
+        outSuffix = outSuffix+config.get('TIMEWAVEFORMS', 'OUTEQSCALE')
     else:
         equalScale = False
 
@@ -96,7 +95,6 @@ def main():
     else:
         if confExists:
             outDir = config.get('TIMEWAVEFORMSC', 'RELIMAGEDIR')
-            outInfix = config.get('TIMEWAVEFORMSC', 'OUTINFIX')
             outModel = config.get('TIMEWAVEFORMSC', 'NAMEMODEL')
         if not os.path.isdir(outDir):
             os.makedirs(outDir)
@@ -138,7 +136,7 @@ def main():
         iMetaFile=args.iMetaFile
 
     if args.iPath:
-        outNameModel = NameModel(outModel, outPrefix, outInfix, outSuffix)
+        outNameModel = NameModel(outModel, otherSuffix=outSuffix)
         csvFieldNames=['channel code', ' start time', ' end time', ' Absolute Path File']   
         grGenerator=PlotTimeWaveformsC(args.iPath, iMetaFile, outDir, outNameModel, outFile, outFormat, station=sta, channel=chan, startTime=startTime, endTime=endTime, duration=duration, csvFileName=csvAbsFileName, csvFieldNames=csvFieldNames, outUnit=outUnit, removeResponse=remResp, equalScale = equalScale )
         grGenerator.generate()

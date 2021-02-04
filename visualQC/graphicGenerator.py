@@ -43,60 +43,35 @@ def get_nhnm():
 class NameModel():
 
     """
-    Le model de nom d'un fichier :
-	prefix + infix + suffix + format
-
-    (si il ne devait y avoir, de façon certaine, qu'un station code dans le
-    graphique, ce code apparaitrait tel quel dans le nom de fichier à la
-    place du symbole "#S")
-
-    L'absence de #L et #C dans le nom de fichier indique que les informations
-    de location et channel codes ne sont pas présentes dans le graphique.
-
-    (concernant les informations qui peuvent être présentes dans les
-    différents types de graphique, l'ordre à respecter dans les modèles
-    de nom de fichier serait : NETCODE, STACODE, LOCCODE, CHACODE)
-
-    ex. 4G.#S.#L.AZBBA.TimeWaveformsC.jpeg
-    prefix = 4G.#S.#L.AZBBA
-    infix = TimeWaveformsC
-    suffix = ''
-    format = .jpeg
-
+    Name mode :  <NETCODE>.<STACODE>.<LOCCODE>.<CHACODE>.PlotName.format
+    Example: 4G.#S.#L.AZBBA.TimeWaveformsC.jpeg
+    #S : for all stations
+    #L : all locations or no information for location
     """
 
-    def __init__(self, model='', prefix='', infix='', suffix=''):
+    def __init__(self, model='', otherSuffix=''):
         self.model = model
-        self.prefix=prefix
-        self.infix=infix
-        self.suffix=suffix
+        self.otherSuffix = otherSuffix
 
-    def setPrefix(self, aPrefix):
-        self.prefix=aPrefix
+    def replaceElements(self, network=None, station=None, location=None, channel=None):
+        name = self.model
+        if network != None:
+            name = name.replace('%N', network)
+        if station != None:
+            name = name.replace('%S', station)
+        if location != None:
+            name = name.replace('%L', location)
+        if channel != None:
+            name = name.replace('%C', channel)
+        return name
 
-    def setInfix(self, anInfix):
-        self.infix=anInfix
-
-    def setSuffix(self, aSuffix):
-        self.suffix=aSuffix
-
-    def getModel(self):
-        return self.model    
-
-    def generateName(self):
-        return self.prefix + self.infix + self.suffix
-
-    def replaceNetwork(self, net):
-        self.model = self.model.replace('%N', net)
-        #return self.model
-
-    def replaceStation(self, sta):
-        self.model = self.model.replace('%S', sta)
-        #return self.model
-
-    def replaceChannel(self, chan):
-        self.model = self.model.replace('%C', chan)
-        #return self.model
+    def completeFileName(self, network=None, station=None, location=None, channel=None,  fileDir=None, fileFormat=None):
+        name = self.replaceElements(network, station, location, channel)
+        fileName = name + self.otherSuffix + fileFormat
+        if fileDir != None:
+            fileName = fileDir + fileName
+        return fileName
+ 
 
 class GraphicGenerator(ABC):
 
@@ -105,22 +80,6 @@ class GraphicGenerator(ABC):
         self.outputModel = outModel
         self.outputFile=outputFile
         self.outputFormat=outputFormat
-
-    def generateName(self):
-
-        outModel = self.outputModel
-        outFile = outModel.generateName() + self.outputFormat
-        if self.outputDir != None:
-            outFile = self.outputDir+outFile
-        return outFile
-
-    def generateNameFromModel(self):
-
-        outModel = self.outputModel
-        outFile = outModel.getModel() + self.outputFormat
-        if self.outputDir != None:
-            outFile = self.outputDir+outFile
-        return outFile
 
     @abstractmethod
     def generate(self):
@@ -135,8 +94,6 @@ class MetadataGraphicGenerator(GraphicGenerator):
     def __init__(self, iMetaDataDir, outputDir=None, outModel=None, outputFile=None, outputFormat=None):
         super().__init__(outputDir, outModel, outputFile, outputFormat)
         self.iMetaDataDir=iMetaDataDir
-        #print("metadata dir: " + iMetaDataDir)
-        #self.inventory=read_inventory(self.iMetaDataDir,'STATIONXML')
 
     def getInputFile(self, station=None):
         """ return an xml format input file with absolut path, or an absolute path name with *.xml, for a number of stations. Deprecated !!!"""
@@ -170,10 +127,17 @@ class TimeBasedGraphicGenerator(GraphicGenerator):
 
     def __init__(self, inputDir, outputDir=None, outModel=None, outputFile=None, outputFormat=None, startTime=None, endTime=None):
         super().__init__(outputDir, outModel,  outputFile, outputFormat)
-        #GraphicGenerator.__init__(outputDir, outModel,  outputFile, outputFormat)
         self.inputDir=inputDir
         self.startTime=startTime
         self.endTime=endTime
+        self.client = Client(self.inputDir)
+
+    def findNetworkCodes(self):
+        allStations = self.client.get_all_stations()
+        net=set()
+        for st in allStations:
+            net.add(st[0])
+        return list(net)
 
     @abstractmethod
     def generate(self):
@@ -200,7 +164,7 @@ class DurationBasedGraphicGenerator(TimeBasedGraphicGenerator):
         "call obspy to generate graphic"
 
 class MeasuredDataGraphicGenerator(DurationBasedGraphicGenerator):
-
+    
     net="*"
     sta="*"
     loc="*"
@@ -208,31 +172,18 @@ class MeasuredDataGraphicGenerator(DurationBasedGraphicGenerator):
 
     def __init__(self, inputDir, outputDir=None, outModel=None, outputFile=None, outputFormat=None, station="*", channel="*", startTime=None, endTime=None, duration=None):
         super().__init__(inputDir, outputDir, outModel,  outputFile, outputFormat, startTime, endTime, duration)
-        self.iDataDir=inputDir
         self.sta=station
         self.chan=channel
-        self.client = Client(self.iDataDir)
 
     def isHydrophone(self):
         if re.match('..H', self.chan) != None:
             return True
         else:
-            return False
-
-    def findNetworkCodes(self):
-        allStations = self.client.get_all_stations()
-        net=set()
-        for st in allStations:
-            net.add(st[0])
-        return list(net)           
+            return False         
 
     #input from SDS file
     def getStream(self):
         #client = Client(self.iDataDir)
-        #print(self.sta)
-        #print(self.iDataDir)
-        #print(self.startTime)
-        #print(self.endTime)
         return self.client.get_waveforms(self.net, self.sta, self.loc, self.chan, self.startTime, self.endTime)
 
     @abstractmethod
@@ -291,12 +242,8 @@ class PlotStationsMap(MetadataGraphicGenerator):
         inFile =self.iMetaDataDir
         inv= read_inventory(inFile,'STATIONXML')
         outFile = self.outputFile
-        #print(inv[0].code)
-        #print(self.outSuffix)
         if  outFile == None:
-            #self.outputModel.setPrefix(inv[0].code+'.#S.#L.#C.')
-            self.outputModel.replaceNetwork(inv[0].code)
-            outFile = self.generateNameFromModel()
+            outFile = self.outputModel.completeFileName(network=inv[0].code, fileDir=self.outputDir, fileFormat= self.outputFormat)
         print('Generate image: '+outFile)
         inv.plot(projection="local", resolution="i", outfile=outFile)
 
@@ -317,11 +264,12 @@ class PlotDataAvailability(EventBasedGraphicGenerator):
         if self.eventTime:
             self.command=self.command+' --event-time '+self.eventTime
 
+        netCodes = self.findNetworkCodes()
+
         outFile = self.outputFile
         if  outFile == None:
-            outFile = self.generateNameFromModel()
+            outFile = self.outputModel.completeFileName(network=netCodes[0], fileDir=self.outputDir, fileFormat= self.outputFormat)
         self.command=self.command+' --output '+outFile
-        #print(self.command)
         print('Generate image: '+outFile)
         os.system(self.command)
 
@@ -345,11 +293,7 @@ class PlotInstrumentResponseS(MetadataGraphicGenerator, GraphicMetaData):
         inv = read_inventory(inFile,'STATIONXML')
         outFile = self.outputFile
         if  outFile == None:
-            #self.outputModel.setPrefix(inv[0].code+'.'+self.station+'.')
-            #outFile = self.generateName()
-            self.outputModel.replaceNetwork(inv[0].code)
-            self.outputModel.replaceStation(self.station)
-            outFile = self.generateNameFromModel()
+            outFile = self.outputModel.completeFileName(network=inv[0].code, station=self.station, fileDir=self.outputDir, fileFormat= self.outputFormat)
                 
         sta = inv[0].select(station=self.station)[0]
         print('Generate image: '+outFile)
@@ -365,18 +309,12 @@ class PlotInstrumentResponseC(MetadataGraphicGenerator, GraphicMetaData):
 
     def generate(self):
 
-        #print("InputDir:"+self.inputDir)
-        #print(self.extension)
         #inFile = self.getInputFile()
         inFile =self.iMetaDataDir
         inv = read_inventory(inFile,'STATIONXML')
         outFile = self.outputFile
         if  outFile == None:
-            #self.outputModel.setPrefix(inv[0].code+'.#S.#L.'+self.channel+'.')
-            #outFile = self.generateName()
-            self.outputModel.replaceNetwork(inv[0].code)
-            self.outputModel.replaceChannel(self.channel)
-            outFile = self.generateNameFromModel()
+            outFile = self.outputModel.completeFileName(network=inv[0].code, channel=self.channel, fileDir=self.outputDir, fileFormat= self.outputFormat)
 
 
         inv =inv.select(station='*', channel=self.channel)	
@@ -388,10 +326,11 @@ class PlotInstrumentResponseC(MetadataGraphicGenerator, GraphicMetaData):
 
 class  PlotTimeWaveformsS(MeasuredDataGraphicGenerator, GraphicMetaData):
 
-    def __init__(self, inputDir, outputDir=None, outModel=None, outputFile=None, outputFormat=None, station="*", channel="*", startTime=None, endTime=None, duration=None, csvFileName="", csvFieldNames=[]):
+    def __init__(self, inputDir, outputDir=None, outModel=None, outputFile=None, outputFormat=None, station="*", channel="*", startTime=None, endTime=None, duration=None, csvFileName="", csvFieldNames=[], equalScale=False):
 
         MeasuredDataGraphicGenerator.__init__(self,inputDir, outputDir, outModel, outputFile, outputFormat, station, channel, startTime, endTime, duration)
         GraphicMetaData.__init__(self, csvFileName, csvFieldNames)
+        self.equalScale=equalScale
 
 
     def generate(self):
@@ -411,14 +350,10 @@ class  PlotTimeWaveformsS(MeasuredDataGraphicGenerator, GraphicMetaData):
 
         outFile = self.outputFile
         if  outFile == None:
-            #self.outputModel.setPrefix(netCodes[0]+'.'+self.sta+'.#L.#C.')
-            #outFile = self.generateName()
-            self.outputModel.replaceNetwork(netCodes[0])
-            self.outputModel.replaceStation(self.sta)
-            outFile = self.generateNameFromModel()
+            outFile = self.outputModel.completeFileName(network=netCodes[0], station=self.sta, fileDir=self.outputDir, fileFormat= self.outputFormat)
 
         print('Generate image: '+outFile)
-        st.plot(outfile=outFile, equal_scale = False)
+        st.plot(outfile=outFile, equal_scale = self.equalScale)
         #st.plot(outfile=self.outputFile)
         self.generateCSV([self.sta, self.startTime, self.endTime, os.path.abspath(outFile)])
 
@@ -451,25 +386,16 @@ class PlotTimeWaveformsC(MeasuredDataGraphicGenerator, MetadataGraphicGenerator,
 
         outFile = self.outputFile
         if  outFile == None:
-            #self.outputModel.setPrefix(netCodes[0]+'.#S.#L.'+self.chan+'.')
-            #outFile = self.generateName()
-            self.outputModel.replaceNetwork(netCodes[0])
-            self.outputModel.replaceChannel(self.chan)
-            outFile = self.generateNameFromModel()
+            outFile = self.outputModel.completeFileName(network=netCodes[0], channel=self.chan, fileDir=self.outputDir, fileFormat= self.outputFormat)
 
-        #print(self.removeResponse)
         if self.removeResponse:
-            #print(self.removeResponse)
             st2 = st.copy()
             #print("st2 : ", st2)
-            #print(self.outUnit)
             #plotFile="../Images/TWfComp/L3B_nsplot_cTWaveforms_RemResp_"+self.outUnit+"_stepPlot_"+self.sta+"_"+self.chan+".jpeg"
-            #st2.remove_response(inventory=inv, output="VEL")
             #st2.remove_response(inventory=inv, output=self.outUnit, plot=plotFile)
             st2.remove_response(inventory=inv, output=self.outUnit)
             st2.plot(outfile=outFile, equal_scale = self.equalScale)
         else:
-            #st.plot(outfile=outFile, equal_scale = False)
             #st.plot(outfile=outFile)
             st.plot(outfile=outFile, equal_scale = self.equalScale)
         print('Generate image: '+outFile)
@@ -486,14 +412,6 @@ class PlotPPSDSC(MeasuredDataGraphicGenerator, MetadataGraphicGenerator, Graphic
         self.ppsdDir=ppsdDir
         self.ppsdNameModel=ppsdNameModel
         self.ppsdFormat=ppsdFormat
-
-    def generatePPSDName(self):
-
-        ppsdModel = self.ppsdNameModel
-        ppsdFile = ppsdModel.generateName() + self.ppsdFormat
-        if self.ppsdDir != None:
-            ppsdFile = self.ppsdDir+ppsdFile
-        return ppsdFile
 
     def generate(self):
         """
@@ -513,11 +431,9 @@ class PlotPPSDSC(MeasuredDataGraphicGenerator, MetadataGraphicGenerator, Graphic
         inv = inv.select(station=self.sta, channel=self.chan)
         outFile = self.outputFile
         if  outFile == None:
-            self.outputModel.setPrefix(inv[0].code+'.'+self.sta+'.#L.'+self.chan+'.')
-            outFile = self.generateName()
+            outFile = self.outputModel.completeFileName(network=inv[0].code, station=self.sta, channel=self.chan, fileDir=self.outputDir, fileFormat= self.outputFormat)
 
-        self.ppsdNameModel.setPrefix(inv[0].code+'.'+self.sta+'.#L.'+self.chan+'.')
-        ppsdFileName=self.generatePPSDName()
+        ppsdFileName= self.ppsdNameModel.completeFileName(network=inv[0].code, station=self.sta, channel=self.chan, fileDir=self.ppsdDir, fileFormat= self.ppsdFormat)
 
         st = self.getStream()
         #print(st)
@@ -550,14 +466,6 @@ class PlotPPSDC(MetadataGraphicGenerator, GraphicMetaData):
         inFile =self.iMetaDataDir
         self.inventory=read_inventory(inFile,'STATIONXML')
 
-    def generatePPSDName(self):
-
-        ppsdModel = self.ppsdNameModel
-        ppsdFile = ppsdModel.generateName() + self.ppsdFormat
-        if self.ppsdDir != None:
-            ppsdFile = self.ppsdDir+ppsdFile
-        return ppsdFile
-
     def createChannelStationsDictForNetwork(self, net):
         """Create a dictionary with the channel code as key and a set of station codes as value
         """        
@@ -588,8 +496,7 @@ class PlotPPSDC(MetadataGraphicGenerator, GraphicMetaData):
 
         outFile = self.outputFile
         if  outFile == None:
-            self.outputModel.setPrefix(self.inventory[0].code+'.#S.#L.'+self.chan+'.')
-            outFile = self.generateName()
+            outFile = self.outputModel.completeFileName(network=self.inventory[0].code, channel=self.chan, fileDir=self.outputDir, fileFormat= self.outputFormat)
 
         fig, ax = plt.subplots()
         if not isHydrophone:
@@ -600,12 +507,17 @@ class PlotPPSDC(MetadataGraphicGenerator, GraphicMetaData):
                 ax.plot(xdata3, noise_model, linestyle=(':'), linewidth=2, color='grey')
 
 
-        channelStations=self.createChannelStationsDictForNetwork(self.inventory[0].code) 
-        for station in channelStations[self.chan]:
-            self.ppsdNameModel.setPrefix(self.inventory[0].code+'.'+station+'.#L.'+self.chan+'.')
-            ppsdFileName=self.generatePPSDName()
+        channelStations=self.createChannelStationsDictForNetwork(self.inventory[0].code)
+        #print(channelStations)
+        #stationList = [st for st in channelStations[self.chan]]
+        stationList = list(channelStations[self.chan])
+        stationList.sort()
+        #print(stationList) 
+        for station in stationList:
+            ppsdFileName= self.ppsdNameModel.completeFileName(network=self.inventory[0].code, station=station, channel=self.chan, fileDir=self.ppsdDir, fileFormat= self.ppsdFormat)
+            #print(ppsdFileName)
             if os.path.exists(ppsdFileName):
-                ppsd =  PPSD.load_npz(ppsdFileName) # ex '4G.LSV6A.BHZ.PPSDSC.npz'
+                ppsd =  PPSD.load_npz(ppsdFileName) # ex '4G.LSV6A.#L.BHZ.PPSD.npz'
                 print("read npz file : " + ppsdFileName)
                 periods, percentile_values = ppsd.get_percentile()
                 ax.plot(periods, percentile_values, label=station)

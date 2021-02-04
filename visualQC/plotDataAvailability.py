@@ -24,9 +24,6 @@ def main():
 
     #default
     outDir= os.getcwd()
-    outPrefix = ''
-    outInfix = 'DataAvailability.'
-    outSuffix =''
     outFmt = 'jpeg'
     outModel= 'DataAvailability.'
     mseedDirBaseName = '/*/miniseed_basic/*.mseed'
@@ -60,7 +57,6 @@ def main():
     else:
         if confExists:
             outDir = config.get('DTAVAILABILITY', 'RELIMAGEDIR')
-            outInfix = config.get('DTAVAILABILITY', 'OUTINFIX')
             outModel = config.get('DTAVAILABILITY', 'NAMEMODEL')
         if not os.path.isdir(outDir):
             os.makedirs(outDir)
@@ -91,7 +87,7 @@ def main():
     if args.eventTime:
         eventTime=args.eventTime
 
-    outNameModel = NameModel(outModel, outPrefix, outInfix, outSuffix)
+    outNameModel = NameModel(outModel)
     grGenerator=PlotDataAvailability(iDir, outDir, outNameModel, outFile, outFmt, startTime, endTime, eventTime)
     grGenerator.generate()
     

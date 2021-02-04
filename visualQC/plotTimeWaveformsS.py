@@ -25,8 +25,6 @@ def main():
 
     #default
     outDir = os.getcwd()
-    outPrefix = ''
-    outInfix = 'TimeWaveformsS.'
     outSuffix =''
     outFmt = 'jpeg'
     outModel= '%N.#S.#L.#C.TimeWaveformsS.'
@@ -55,6 +53,7 @@ def main():
     parser.add_argument("--startTime", metavar='START_TIME', required=True, help='<START_TIME> Optional starting time')
     parser.add_argument("--endTime",  metavar='END_TIME', required=False, help='<END_TIME> Optional end time')
     parser.add_argument("--duration",  metavar='SECONDCOUNT', required=False, type=int, help='<SECONDCOUNT> Optional number of second for each station waveform plot, this usually corresponds to the duration of a seismic event')
+    parser.add_argument('--equalScale', default=False, action="store_true", help=' Optional equal scale, to plot all waveforms in equal scale. The default value is False.')
 
     args = parser.parse_args()
 
@@ -70,7 +69,6 @@ def main():
     else:
         if confExists:
             outDir = config.get('TIMEWAVEFORMSS', 'RELIMAGEDIR')
-            outInfix = config.get('TIMEWAVEFORMSS', 'OUTINFIX')
             outModel = config.get('TIMEWAVEFORMSS', 'NAMEMODEL')
         if not os.path.isdir(outDir):
             os.makedirs(outDir)
@@ -87,7 +85,6 @@ def main():
         #print(args.model)
 
     if args.result:
-        #print(args.result)
         csvAbsFileName=args.result
     else:
         if confExists:
@@ -99,19 +96,22 @@ def main():
 
     if args.startTime:
         startTime=UTCDateTime(args.startTime)
-        #print(startTime)
     if args.endTime:
         endTime=UTCDateTime(args.endTime)
-        #print(endTime)
     if args.duration:
         duration=args.duration
-        #print(duration)
         endTime=startTime+duration
 
+    if args.equalScale:
+        equalScale = args.equalScale
+        outSuffix = outSuffix+config.get('TIMEWAVEFORMS', 'OUTEQSCALE')
+    else:
+        equalScale = False
+
     if args.iPath:
-        outNameModel = NameModel(outModel, outPrefix, outInfix, outSuffix)
+        outNameModel = NameModel(outModel, otherSuffix=outSuffix)
         csvFieldNames=['station code', ' start time', ' end time', ' Absolute Path File']   
-        grGenerator=PlotTimeWaveformsS(args.iPath, outDir, outNameModel, outFile, outFmt, station=sta, startTime=startTime, endTime=endTime, duration=duration, csvFileName=csvAbsFileName, csvFieldNames=csvFieldNames )
+        grGenerator=PlotTimeWaveformsS(args.iPath, outDir, outNameModel, outFile, outFmt, station=sta, startTime=startTime, endTime=endTime, duration=duration, csvFileName=csvAbsFileName, csvFieldNames=csvFieldNames, equalScale = equalScale)
         grGenerator.generate()
     
     
