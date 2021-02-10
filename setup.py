@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="visualQC", 
-    version="0.0.1.4.6",
+    version="0.0.1.4.7",
     author="IPGP",   
     author_email="goubier@ipgp.fr",
     description="Scripts used to generate data plots",

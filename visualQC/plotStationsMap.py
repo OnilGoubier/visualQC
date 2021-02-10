@@ -5,7 +5,7 @@ Provide a map of all stations.
 Can use one xml file containing metadata of all stations
 """
 
-import os, argparse
+import os, argparse, sys
 from visualQC.graphicGenerator import PlotStationsMap, NameModel
 import configparser
 
@@ -55,8 +55,22 @@ def main():
         outFile = args.output
     else:
         if confExists:
-            outDir = config.get('STATIONMAP', 'RELIMAGEDIR')
-            outModel = config.get('STATIONMAP', 'NAMEMODEL')
+            try:
+                outDir = config.get('STATIONMAP', 'RELIMAGEDIR')         
+            except configparser.NoOptionError as error:
+                print ("Error in options Name: ", error, "default value will be used")
+            except configparser.NoSectionError as error:
+                print ("Error in sections Name: ", error, "default value will be used")
+
+            try:
+                outModel = config.get('STATIONMAP', 'NAMEMODEL')
+            except configparser.NoOptionError as error:
+                print ("Error in options Name: ", error, "default value will be used")
+            except configparser.NoSectionError as error:
+                print ("Error in sections Name: ", error, "default value will be used")
+        else:
+            print("no config file, default value will be used")
+
         if not os.path.isdir(outDir):
             os.makedirs(outDir)
         outFile = None
@@ -65,7 +79,14 @@ def main():
         outFmt = args.outFormat
     else:
         if confExists:
-            outFmt = config.get('ALLPLOTS', 'OUTFORMAT')
+            try:
+                outFmt = config.get('ALLPLOTS', 'OUTFORMAT')
+            except configparser.NoOptionError as error:
+                print ("Error in options Name: ", error, "default value will be used")
+            except configparser.NoSectionError as error:
+                print ("Error in sections Name: ", error, "default value will be used")
+        else:
+            print("no config file")
 
     if args.iFile:
         outNameModel = NameModel(outModel)

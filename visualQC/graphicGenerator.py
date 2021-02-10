@@ -183,7 +183,6 @@ class MeasuredDataGraphicGenerator(DurationBasedGraphicGenerator):
 
     #input from SDS file
     def getStream(self):
-        #client = Client(self.iDataDir)
         return self.client.get_waveforms(self.net, self.sta, self.loc, self.chan, self.startTime, self.endTime)
 
     @abstractmethod
